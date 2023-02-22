@@ -1,7 +1,7 @@
 ---
 title: "Back when I was 15 I was publishing TI-83 games online. I'm that cool."
 date: 2023-02-20T21:40:56-05:00
-draft: true
+draft: false
 categories: 
     - "Develop"
 ---
