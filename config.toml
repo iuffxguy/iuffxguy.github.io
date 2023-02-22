@@ -1,0 +1,11 @@
+baseURL = 'http://example.org/'
+languageCode = 'en-us'
+title = 'philseguin.com'
+theme = 'yinyang'
+
+[author]
+  name = "Phil Seguin"
+
+[params]
+extraHead = ''
+mainSections = ["posts"]
