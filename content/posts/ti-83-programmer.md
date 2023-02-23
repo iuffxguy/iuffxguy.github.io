@@ -5,6 +5,7 @@ draft: false
 categories: 
     - "Develop"
 ---
+Link: [https://www.ticalc.org/archives/files/fileinfo/2/280.html](https://www.ticalc.org/archives/files/fileinfo/2/280.html)
 
 In 1997, a 'mobile' device was a bit different than today's amazing phones. 
 
@@ -12,5 +13,5 @@ By learning TI-83 Basic I got my first introduction into loops, conditional stat
 
 What was weird about coming across this was my close friends know I have always had a strange obsession with horse racing.  I had forgotten that I built this betting/racing simulator on my TI-83 when I was 15.
 
-[https://www.ticalc.org/archives/files/fileinfo/2/280.html](https://www.ticalc.org/archives/files/fileinfo/2/280.html)
+
 
