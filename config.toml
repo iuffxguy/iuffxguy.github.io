@@ -2,6 +2,8 @@ baseURL = 'https://iuffxguy.github.io/'
 languageCode = 'en-us'
 title = 'philseguin.com'
 theme = 'yinyang'
+googleAnalytics = 'G-9PWRFZ9B2L'
+
 
 [author]
   name = "Phil Seguin"
