@@ -5,9 +5,8 @@ theme = 'yinyang'
 googleAnalytics = 'G-9PWRFZ9B2L'
 
 
-[author]
-  name = "Phil Seguin"
-
 [params]
+  [params.author]
+    name = "Phil Seguin"
 extraHead = ''
 mainSections = ["posts"]

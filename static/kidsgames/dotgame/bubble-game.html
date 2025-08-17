@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Pop Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            cursor: crosshair;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.3));
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            cursor: grab;
+            animation: float 3s ease-in-out infinite;
+            transition: transform 0.1s ease;
+            user-select: none;
+        }
+
+        .bubble:active {
+            cursor: grabbing;
+        }
+
+        .bubble.dragging {
+            animation: none;
+            z-index: 100;
+            transform: scale(1.1);
+        }
+
+        .bubble.moving {
+            animation: none;
+        }
+
+        .black-hole {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 50%, #000000, #333333, #000000);
+            border: 3px solid #666666;
+            box-shadow: 
+                inset 0 0 20px rgba(255, 255, 255, 0.1),
+                0 0 30px rgba(0, 0, 0, 0.8),
+                0 0 60px rgba(0, 0, 0, 0.6);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 30px rgba(0, 0, 0, 0.8), 0 0 60px rgba(0, 0, 0, 0.6); }
+            50% { transform: scale(1.05); box-shadow: inset 0 0 25px rgba(255, 255, 255, 0.15), 0 0 40px rgba(0, 0, 0, 0.9), 0 0 80px rgba(0, 0, 0, 0.7); }
+        }
+
+        .bubble:hover {
+            transform: scale(1.1);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .bubble.popping {
+            animation: pop 0.3s ease-out forwards;
+        }
+
+        .score {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .instructions {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 16px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        @keyframes suck {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.5); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .bubble.sucked {
+            animation: suck 0.5s ease-in forwards;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(0) rotate(0deg) translateX(0);
+                opacity: 1;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(400px) rotate(720deg) translateX(var(--drift, 0px));
+                opacity: 0;
+            }
+        }
+
+        .confetti-piece {
+            animation: confetti-fall 2s ease-out forwards;
+        }
+
+        .powerup-chest {
+            position: absolute;
+            width: 50px;
+            height: 40px;
+            background: linear-gradient(45deg, #8B4513, #DEB887);
+            border: 3px solid #654321;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            animation: chest-glow 2s ease-in-out infinite;
+        }
+
+        .powerup-chest:before {
+            content: '🎁';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+        }
+
+        @keyframes chest-glow {
+            0%, 100% { box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); }
+            50% { box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6); }
+        }
+
+        .weapon-ui {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-size: 16px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .weapon-active {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 2px solid #ffd700;
+        }
+
+        .laser-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, #ff0000, #ff0000, transparent);
+            height: 4px;
+            pointer-events: none;
+            z-index: 50;
+            animation: laser-flash 0.3s ease-out;
+        }
+
+        @keyframes laser-flash {
+            0% { opacity: 0; height: 2px; }
+            50% { opacity: 1; height: 6px; }
+            100% { opacity: 0; height: 2px; }
+        }
+
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 2000;
+            font-size: 24px;
+        }
+
+        .restart-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .restart-btn:hover {
+            background: #45a049;
+        }
+
+        .bubble-counter {
+            position: fixed;
+            top: 60px;
+            left: 20px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .warning {
+            color: #ff4444 !important;
+            animation: warning-blink 0.5s infinite;
+        }
+
+        @keyframes warning-blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.5; }
+        }
+
+        @keyframes level-up-flash {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <div class="score">Score: <span id="scoreValue">0</span></div>
+        <div class="bubble-counter">Bubbles: <span id="bubbleCount">0</span>/20</div>
+        <div class="level-display" style="position: fixed; top: 100px; left: 20px; color: white; font-size: 18px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); z-index: 1000;">Level: <span id="levelValue">1</span></div>
+        <div class="instructions">Drag bubbles to the black hole!</div>
+        <div class="weapon-ui" id="weaponUI"></div>
+    </div>
+
+    <script>
+        let score = 0;
+        let bubbleId = 0;
+        let isDragging = false;
+        let dragElement = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+        const gameContainer = document.getElementById('gameContainer');
+        const scoreElement = document.getElementById('scoreValue');
+        const bubbleCountElement = document.getElementById('bubbleCount');
+        const levelElement = document.getElementById('levelValue');
+        const weaponUIElement = document.getElementById('weaponUI');
+        let blackHole = null;
+        let currentWeapon = null;
+        let gameOver = false;
+        let chestId = 0;
+        let level = 1;
+        let bubblesDestroyed = 0;
+
+        function getRandomColor() {
+            const colors = [
+                'rgba(255, 182, 193, 0.8)',
+                'rgba(173, 216, 230, 0.8)',
+                'rgba(144, 238, 144, 0.8)',
+                'rgba(255, 218, 185, 0.8)',
+                'rgba(221, 160, 221, 0.8)',
+                'rgba(255, 255, 224, 0.8)'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function createBubble() {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.id = `bubble-${bubbleId++}`;
+            
+            const size = Math.random() * 60 + 40;
+            bubble.style.width = size + 'px';
+            bubble.style.height = size + 'px';
+            
+            bubble.style.left = Math.random() * (window.innerWidth - size) + 'px';
+            bubble.style.top = Math.random() * (window.innerHeight - size) + 'px';
+            
+            bubble.style.background = `radial-gradient(circle at 30% 30%, ${getRandomColor()}, rgba(255, 255, 255, 0.3))`;
+            
+            bubble.addEventListener('mousedown', startDrag);
+            bubble.addEventListener('touchstart', startDrag);
+            
+            gameContainer.appendChild(bubble);
+            updateBubbleCount();
+            
+            if (level >= 2) {
+                startBubbleMovement(bubble);
+            }
+        }
+
+        function startBubbleMovement(bubble) {
+            bubble.classList.add('moving');
+            
+            let dx = (Math.random() - 0.5) * 2;
+            let dy = (Math.random() - 0.5) * 2;
+            let speed = 0.5 + Math.random() * 1.5;
+            
+            function moveBubble() {
+                if (!bubble.parentNode || bubble.classList.contains('dragging') || bubble.classList.contains('sucked')) {
+                    return;
+                }
+                
+                let currentLeft = parseFloat(bubble.style.left);
+                let currentTop = parseFloat(bubble.style.top);
+                let bubbleSize = parseFloat(bubble.style.width);
+                
+                let newLeft = currentLeft + dx * speed;
+                let newTop = currentTop + dy * speed;
+                
+                // Check wall collisions first
+                if (newLeft <= 0 || newLeft >= window.innerWidth - bubbleSize) {
+                    dx = -dx;
+                    newLeft = Math.max(0, Math.min(window.innerWidth - bubbleSize, newLeft));
+                }
+                
+                if (newTop <= 0 || newTop >= window.innerHeight - bubbleSize) {
+                    dy = -dy;
+                    newTop = Math.max(0, Math.min(window.innerHeight - bubbleSize, newTop));
+                }
+                
+                // Check bubble collisions for level 3+
+                if (level >= 3) {
+                    const collisionResult = checkBubbleCollisions(bubble, bubbleSize, newLeft, newTop);
+                    newLeft = collisionResult.newLeft;
+                    newTop = collisionResult.newTop;
+                    
+                    if (collisionResult.collision) {
+                        // Reverse direction on collision
+                        dx = -dx + (Math.random() - 0.5) * 0.5; // Add some randomness
+                        dy = -dy + (Math.random() - 0.5) * 0.5;
+                        
+                        // Ensure bubbles stay in bounds after collision
+                        newLeft = Math.max(0, Math.min(window.innerWidth - bubbleSize, newLeft));
+                        newTop = Math.max(0, Math.min(window.innerHeight - bubbleSize, newTop));
+                    }
+                }
+                
+                bubble.style.left = newLeft + 'px';
+                bubble.style.top = newTop + 'px';
+                
+                requestAnimationFrame(moveBubble);
+            }
+            
+            requestAnimationFrame(moveBubble);
+        }
+
+        function checkBubbleCollisions(bubble, bubbleSize, newLeft, newTop) {
+            if (level < 3) return { newLeft, newTop, collision: false };
+            
+            const bubbles = document.querySelectorAll('.bubble');
+            let collision = false;
+            let finalLeft = newLeft;
+            let finalTop = newTop;
+            
+            bubbles.forEach(otherBubble => {
+                if (otherBubble === bubble || !otherBubble.parentNode) return;
+                if (otherBubble.classList.contains('dragging') || otherBubble.classList.contains('sucked')) return;
+                
+                const otherLeft = parseFloat(otherBubble.style.left);
+                const otherTop = parseFloat(otherBubble.style.top);
+                const otherSize = parseFloat(otherBubble.style.width);
+                
+                const distance = Math.sqrt(
+                    Math.pow((finalLeft + bubbleSize/2) - (otherLeft + otherSize/2), 2) +
+                    Math.pow((finalTop + bubbleSize/2) - (otherTop + otherSize/2), 2)
+                );
+                
+                const minDistance = (bubbleSize + otherSize) / 2;
+                
+                if (distance < minDistance) {
+                    collision = true;
+                    
+                    // Calculate separation vector
+                    const dx = (finalLeft + bubbleSize/2) - (otherLeft + otherSize/2);
+                    const dy = (finalTop + bubbleSize/2) - (otherTop + otherSize/2);
+                    const len = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (len > 0) {
+                        // Normalize and separate
+                        const nx = dx / len;
+                        const ny = dy / len;
+                        const separation = minDistance - distance;
+                        
+                        finalLeft += nx * separation * 0.5;
+                        finalTop += ny * separation * 0.5;
+                    }
+                }
+            });
+            
+            return { newLeft: finalLeft, newTop: finalTop, collision };
+        }
+
+        function updateLevel() {
+            bubblesDestroyed++;
+            if (bubblesDestroyed >= level * 20) {
+                level++;
+                levelElement.textContent = level;
+                
+                // Start movement for existing bubbles when reaching level 2
+                if (level === 2) {
+                    const existingBubbles = document.querySelectorAll('.bubble:not(.moving)');
+                    existingBubbles.forEach(bubble => {
+                        if (!bubble.classList.contains('dragging') && !bubble.classList.contains('sucked')) {
+                            startBubbleMovement(bubble);
+                        }
+                    });
+                }
+                
+                // Show level up message
+                const levelUpMsg = document.createElement('div');
+                levelUpMsg.textContent = `Level ${level}!`;
+                levelUpMsg.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    color: #ffd700;
+                    font-size: 48px;
+                    font-weight: bold;
+                    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+                    z-index: 2000;
+                    pointer-events: none;
+                    animation: level-up-flash 2s ease-out forwards;
+                `;
+                
+                gameContainer.appendChild(levelUpMsg);
+                
+                setTimeout(() => {
+                    if (levelUpMsg.parentNode) {
+                        levelUpMsg.remove();
+                    }
+                }, 2000);
+            }
+        }
+
+        function createBlackHole() {
+            if (blackHole) {
+                blackHole.remove();
+            }
+            
+            blackHole = document.createElement('div');
+            blackHole.className = 'black-hole';
+            
+            const margin = 100;
+            blackHole.style.left = Math.random() * (window.innerWidth - 80 - margin * 2) + margin + 'px';
+            blackHole.style.top = Math.random() * (window.innerHeight - 80 - margin * 2) + margin + 'px';
+            
+            gameContainer.appendChild(blackHole);
+        }
+
+        function startDrag(e) {
+            e.preventDefault();
+            isDragging = true;
+            dragElement = e.target;
+            dragElement.classList.add('dragging');
+            
+            const rect = dragElement.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            dragOffsetX = clientX - rect.left;
+            dragOffsetY = clientY - rect.top;
+        }
+
+        function drag(e) {
+            if (!isDragging || !dragElement) return;
+            
+            e.preventDefault();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            dragElement.style.left = (clientX - dragOffsetX) + 'px';
+            dragElement.style.top = (clientY - dragOffsetY) + 'px';
+        }
+
+        function endDrag(e) {
+            if (!isDragging || !dragElement) return;
+            
+            checkBlackHoleCollision(dragElement);
+            
+            dragElement.classList.remove('dragging');
+            isDragging = false;
+            dragElement = null;
+        }
+
+        function checkBlackHoleCollision(bubble) {
+            if (!blackHole) return;
+            
+            const bubbleRect = bubble.getBoundingClientRect();
+            const blackHoleRect = blackHole.getBoundingClientRect();
+            
+            const bubbleCenterX = bubbleRect.left + bubbleRect.width / 2;
+            const bubbleCenterY = bubbleRect.top + bubbleRect.height / 2;
+            const blackHoleCenterX = blackHoleRect.left + blackHoleRect.width / 2;
+            const blackHoleCenterY = blackHoleRect.top + blackHoleRect.height / 2;
+            
+            const distance = Math.sqrt(
+                Math.pow(bubbleCenterX - blackHoleCenterX, 2) + 
+                Math.pow(bubbleCenterY - blackHoleCenterY, 2)
+            );
+            
+            if (distance < 60) {
+                bubble.classList.add('sucked');
+                score++;
+                scoreElement.textContent = score;
+                updateLevel();
+                
+                createConfetti(blackHoleCenterX, blackHoleCenterY);
+                
+                setTimeout(() => {
+                    if (bubble.parentNode) {
+                        bubble.remove();
+                    }
+                }, 500);
+                
+                if (score % 5 === 0) {
+                    createBlackHole();
+                }
+            }
+        }
+
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag);
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+
+        function spawnBubbles() {
+            if (gameOver) return;
+            
+            createBubble();
+            
+            if (Math.random() < 0.15) {
+                createPowerupChest();
+            }
+            
+            let baseSpawnTime = 4000;
+            let levelSpeedIncrease = (level - 1) * 500;
+            let scoreSpeedIncrease = Math.floor(score / 5) * 100;
+            let spawnTime = Math.max(baseSpawnTime - levelSpeedIncrease - scoreSpeedIncrease, 300);
+            
+            const nextSpawn = Math.random() * spawnTime + 300;
+            setTimeout(spawnBubbles, nextSpawn);
+        }
+
+        function createConfetti(x, y) {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd', '#98d8c8', '#f7dc6f'];
+            
+            for (let i = 0; i < 15; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti confetti-piece';
+                
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.backgroundColor = color;
+                
+                const startX = x + (Math.random() - 0.5) * 60;
+                const startY = y + (Math.random() - 0.5) * 60;
+                confetti.style.left = startX + 'px';
+                confetti.style.top = startY + 'px';
+                
+                const size = Math.random() * 8 + 4;
+                confetti.style.width = size + 'px';
+                confetti.style.height = size + 'px';
+                
+                const rotation = Math.random() * 360;
+                confetti.style.transform = `rotate(${rotation}deg)`;
+                
+                const animationDuration = Math.random() * 1 + 1.5;
+                confetti.style.animationDuration = animationDuration + 's';
+                
+                const drift = (Math.random() - 0.5) * 200;
+                confetti.style.setProperty('--drift', drift + 'px');
+                
+                gameContainer.appendChild(confetti);
+                
+                setTimeout(() => {
+                    if (confetti.parentNode) {
+                        confetti.remove();
+                    }
+                }, animationDuration * 1000);
+            }
+        }
+
+        function createPowerupChest() {
+            if (gameOver) return;
+            
+            const chest = document.createElement('div');
+            chest.className = 'powerup-chest';
+            chest.id = `chest-${chestId++}`;
+            
+            const size = 50;
+            chest.style.left = Math.random() * (window.innerWidth - size) + 'px';
+            chest.style.top = Math.random() * (window.innerHeight - size) + 'px';
+            
+            chest.addEventListener('click', function() {
+                openChest(chest);
+            });
+            
+            gameContainer.appendChild(chest);
+            
+            setTimeout(() => {
+                if (chest.parentNode) {
+                    chest.remove();
+                }
+            }, 10000);
+        }
+
+        function openChest(chest) {
+            const weapons = ['laser', 'dynamite', 'mega-hole'];
+            const randomWeapon = weapons[Math.floor(Math.random() * weapons.length)];
+            
+            currentWeapon = randomWeapon;
+            updateWeaponUI();
+            
+            createConfetti(chest.offsetLeft + 25, chest.offsetTop + 20);
+            chest.remove();
+        }
+
+        function updateWeaponUI() {
+            if (currentWeapon) {
+                const weaponNames = {
+                    'laser': '🔴 Laser Cannon (5s - Click to shoot)',
+                    'dynamite': '🧨 Pop-All Dynamite (Click to detonate)',
+                    'mega-hole': '⚫ Super Black Hole (Click to activate)'
+                };
+                weaponUIElement.innerHTML = `<div class="weapon-active">${weaponNames[currentWeapon]}</div>`;
+            } else {
+                weaponUIElement.innerHTML = '';
+            }
+        }
+
+        function updateBubbleCount() {
+            const bubbles = document.querySelectorAll('.bubble');
+            bubbleCountElement.textContent = bubbles.length;
+            
+            if (bubbles.length >= 18) {
+                bubbleCountElement.classList.add('warning');
+            } else {
+                bubbleCountElement.classList.remove('warning');
+            }
+            
+            if (bubbles.length >= 20) {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            gameOver = true;
+            
+            const gameOverDiv = document.createElement('div');
+            gameOverDiv.className = 'game-over';
+            gameOverDiv.innerHTML = `
+                <h2>Game Over!</h2>
+                <p>Too many bubbles on screen!</p>
+                <p>Final Score: ${score}</p>
+                <button class="restart-btn" onclick="restartGame()">Play Again</button>
+            `;
+            
+            gameContainer.appendChild(gameOverDiv);
+        }
+
+        function restartGame() {
+            gameOver = false;
+            score = 0;
+            level = 1;
+            bubblesDestroyed = 0;
+            currentWeapon = null;
+            laserActive = false;
+            if (laserTimeout) {
+                clearTimeout(laserTimeout);
+                laserTimeout = null;
+            }
+            
+            document.querySelectorAll('.bubble, .powerup-chest, .game-over, .laser-line').forEach(el => el.remove());
+            
+            scoreElement.textContent = '0';
+            levelElement.textContent = '1';
+            updateBubbleCount();
+            updateWeaponUI();
+            
+            createBlackHole();
+            spawnBubbles();
+        }
+
+        let laserActive = false;
+        let laserTimeout = null;
+
+        function activateLaser() {
+            laserActive = true;
+            weaponUIElement.innerHTML = `<div class="weapon-active">🔴 Laser Active - Click to shoot!</div>`;
+            
+            laserTimeout = setTimeout(() => {
+                laserActive = false;
+                currentWeapon = null;
+                updateWeaponUI();
+            }, 5000);
+        }
+
+        function fireLaser(x, y) {
+            if (!laserActive) return;
+            
+            const directions = [
+                { dx: 1, dy: 0 },   // right
+                { dx: -1, dy: 0 },  // left
+                { dx: 0, dy: 1 },   // down
+                { dx: 0, dy: -1 },  // up
+                { dx: 1, dy: 1 },   // diagonal down-right
+                { dx: -1, dy: -1 }, // diagonal up-left
+                { dx: 1, dy: -1 },  // diagonal up-right
+                { dx: -1, dy: 1 }   // diagonal down-left
+            ];
+            
+            directions.forEach((dir, index) => {
+                setTimeout(() => {
+                    const laser = document.createElement('div');
+                    laser.className = 'laser-line';
+                    
+                    const length = Math.max(window.innerWidth, window.innerHeight);
+                    const angle = Math.atan2(dir.dy, dir.dx) * 180 / Math.PI;
+                    
+                    laser.style.left = x + 'px';
+                    laser.style.top = y + 'px';
+                    laser.style.width = length + 'px';
+                    laser.style.transformOrigin = '0 50%';
+                    laser.style.transform = `rotate(${angle}deg)`;
+                    
+                    gameContainer.appendChild(laser);
+                    
+                    const bubbles = document.querySelectorAll('.bubble');
+                    bubbles.forEach(bubble => {
+                        const rect = bubble.getBoundingClientRect();
+                        const bubbleCenterX = rect.left + rect.width / 2;
+                        const bubbleCenterY = rect.top + rect.height / 2;
+                        
+                        const distanceToLine = Math.abs(
+                            (bubbleCenterY - y) * dir.dx - (bubbleCenterX - x) * dir.dy
+                        ) / Math.sqrt(dir.dx * dir.dx + dir.dy * dir.dy);
+                        
+                        const dotProduct = (bubbleCenterX - x) * dir.dx + (bubbleCenterY - y) * dir.dy;
+                        
+                        if (distanceToLine < 25 && dotProduct > 0) {
+                            bubble.classList.add('sucked');
+                            score++;
+                            scoreElement.textContent = score;
+                            updateLevel();
+                            createConfetti(bubbleCenterX, bubbleCenterY);
+                            
+                            setTimeout(() => {
+                                if (bubble.parentNode) {
+                                    bubble.remove();
+                                    updateBubbleCount();
+                                }
+                            }, 500);
+                        }
+                    });
+                    
+                    setTimeout(() => {
+                        if (laser.parentNode) {
+                            laser.remove();
+                        }
+                    }, 300);
+                }, index * 50);
+            });
+        }
+
+        function popAllBubbles() {
+            const bubbles = document.querySelectorAll('.bubble');
+            
+            bubbles.forEach((bubble, index) => {
+                setTimeout(() => {
+                    const rect = bubble.getBoundingClientRect();
+                    bubble.classList.add('sucked');
+                    score++;
+                    scoreElement.textContent = score;
+                    updateLevel();
+                    createConfetti(rect.left + rect.width/2, rect.top + rect.height/2);
+                    
+                    setTimeout(() => {
+                        if (bubble.parentNode) {
+                            bubble.remove();
+                            updateBubbleCount();
+                        }
+                    }, 500);
+                }, index * 100);
+            });
+            
+            currentWeapon = null;
+            updateWeaponUI();
+        }
+
+        function activateMegaHole() {
+            if (blackHole) {
+                blackHole.style.width = '200px';
+                blackHole.style.height = '200px';
+                blackHole.style.transform = 'scale(1.5)';
+                
+                setTimeout(() => {
+                    if (blackHole) {
+                        blackHole.style.width = '80px';
+                        blackHole.style.height = '80px';
+                        blackHole.style.transform = 'scale(1)';
+                    }
+                }, 8000);
+            }
+            
+            currentWeapon = null;
+            updateWeaponUI();
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!isDragging) {
+                const target = e.target;
+                
+                if (target.classList.contains('bubble') || target.classList.contains('powerup-chest')) {
+                    return;
+                }
+                
+                if (laserActive) {
+                    fireLaser(e.clientX, e.clientY);
+                } else if (currentWeapon && currentWeapon === 'laser') {
+                    activateLaser();
+                    currentWeapon = null;
+                } else if (currentWeapon === 'dynamite') {
+                    popAllBubbles();
+                } else if (currentWeapon === 'mega-hole') {
+                    activateMegaHole();
+                }
+            }
+        });
+
+        createBlackHole();
+        spawnBubbles();
+    </script>
+</body>
+</html>
