@@ -62,34 +62,35 @@
         }
 
         .color-palette {
-            width: 180px;
+            width: 160px;
             background: #f8f9fa;
-            padding: 10px;
+            padding: 8px;
             display: flex;
             flex-direction: column;
             border-left: 2px solid #eee;
             height: 100%;
             overflow: hidden;
+            justify-content: flex-start;
         }
 
         .palette-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
             color: #333;
         }
 
         .color-item {
             display: flex;
             align-items: center;
-            margin-bottom: 4px;
-            padding: 4px 6px;
-            border-radius: 8px;
+            margin-bottom: 2px;
+            padding: 3px 4px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s ease;
             border: 2px solid transparent;
-            min-height: 28px;
+            min-height: 24px;
         }
 
         .color-item:hover {
@@ -103,42 +104,42 @@
         }
 
         .color-number {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 12px;
-            margin-right: 8px;
-            border: 2px solid #333;
+            font-size: 11px;
+            margin-right: 6px;
+            border: 1px solid #333;
             color: white;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
             flex-shrink: 0;
         }
 
         .color-name {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
             color: #333;
         }
 
         .controls {
-            margin-top: 15px;
+            margin-top: 10px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 4px;
         }
 
         .control-btn {
             background: #4CAF50;
             color: white;
             border: none;
-            padding: 8px 12px;
-            font-size: 12px;
+            padding: 6px 8px;
+            font-size: 10px;
             font-weight: bold;
-            border-radius: 15px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
             text-align: center;
@@ -309,7 +310,7 @@
             <div class="controls">
                 <button class="control-btn" onclick="clearCanvas()">🗑️ Clear All</button>
                 <button class="control-btn secondary" onclick="showHint()">💡 Show Hint</button>
-                <button class="control-btn" onclick="nextScene()">🎯 Next Scene</button>
+                <button class="control-btn" id="nextSceneBtn" onclick="nextScene()" style="display: none;">🎯 Next Scene</button>
             </div>
         </div>
     </div>
@@ -380,14 +381,14 @@
             {
                 name: 'Happy Face',
                 regions: [
-                    // Large face circle
-                    { id: 1, color: 5, path: 'M0.2,0.2 Q0.5,0.1 0.8,0.2 Q0.9,0.5 0.8,0.8 Q0.5,0.9 0.2,0.8 Q0.1,0.5 0.2,0.2 Z' },
-                    // Left eye (big enough to click)
-                    { id: 2, color: 9, path: 'M0.3,0.35 Q0.4,0.3 0.45,0.35 Q0.45,0.45 0.4,0.5 Q0.3,0.45 0.3,0.35 Z' },
-                    // Right eye (big enough to click)
-                    { id: 3, color: 9, path: 'M0.55,0.35 Q0.65,0.3 0.7,0.35 Q0.7,0.45 0.65,0.5 Q0.55,0.45 0.55,0.35 Z' },
-                    // Large smile
-                    { id: 4, color: 1, path: 'M0.35,0.55 Q0.5,0.7 0.65,0.55 Q0.65,0.65 0.5,0.75 Q0.35,0.65 0.35,0.55 Z' }
+                    // Face with eye holes cut out (complex path)
+                    { id: 1, color: 5, path: 'M0.2,0.2 Q0.5,0.1 0.8,0.2 Q0.9,0.5 0.8,0.8 Q0.5,0.9 0.2,0.8 Q0.1,0.5 0.2,0.2 M0.35,0.38 Q0.4,0.33 0.45,0.38 Q0.4,0.43 0.35,0.38 M0.6,0.38 Q0.65,0.33 0.7,0.38 Q0.65,0.43 0.6,0.38 Z' },
+                    // Left eye (separate, larger area)
+                    { id: 2, color: 9, path: 'M0.32,0.32 Q0.42,0.28 0.48,0.32 Q0.48,0.44 0.42,0.48 Q0.32,0.44 0.32,0.32 Z' },
+                    // Right eye (separate, larger area)
+                    { id: 3, color: 9, path: 'M0.57,0.32 Q0.67,0.28 0.73,0.32 Q0.73,0.44 0.67,0.48 Q0.57,0.44 0.57,0.32 Z' },
+                    // Large smile (below face)
+                    { id: 4, color: 1, path: 'M0.32,0.58 Q0.5,0.73 0.68,0.58 Q0.68,0.68 0.5,0.78 Q0.32,0.68 0.32,0.58 Z' }
                 ]
             }
         ];
@@ -496,9 +497,11 @@
             const canvasX = x * (canvas.width / rect.width);
             const canvasY = y * (canvas.height / rect.height);
             
-            // Check which region was clicked
+            // Check which region was clicked - check smaller regions first (reverse order)
             const scene = scenes[currentScene];
-            for (const region of scene.regions) {
+            const sortedRegions = [...scene.regions].reverse();
+            
+            for (const region of sortedRegions) {
                 const scaledPath = scalePathToCanvas(region.path);
                 const path2D = new Path2D(scaledPath);
                 if (ctx.isPointInPath(path2D, canvasX, canvasY)) {
@@ -510,6 +513,7 @@
                             
                             // Check if scene is complete
                             if (completedAreas.size === scene.regions.length) {
+                                document.getElementById('nextSceneBtn').style.display = 'block';
                                 setTimeout(() => showCompletionModal(), 500);
                             }
                         }
@@ -557,6 +561,7 @@
 
         function clearCanvas() {
             completedAreas.clear();
+            document.getElementById('nextSceneBtn').style.display = 'none';
             drawScene();
         }
 
@@ -583,6 +588,9 @@
         function nextScene() {
             currentScene = (currentScene + 1) % scenes.length;
             completedAreas.clear();
+            
+            // Hide next scene button for new scene
+            document.getElementById('nextSceneBtn').style.display = 'none';
             
             document.getElementById('sceneTitle').textContent = scenes[currentScene].name;
             drawScene();
