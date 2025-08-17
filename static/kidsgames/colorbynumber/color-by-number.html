@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color by Number</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .game-container {
+            display: flex;
+            width: 95vw;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: relative;
+        }
+
+        .canvas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .scene-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .progress-info {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .drawing-canvas {
+            flex: 1;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            cursor: pointer;
+            background: white;
+        }
+
+        .color-palette {
+            width: 220px;
+            background: #f8f9fa;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            border-left: 2px solid #eee;
+            overflow-y: auto;
+        }
+
+        .palette-title {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .color-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            min-height: 40px;
+        }
+
+        .color-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .color-item.selected {
+            border: 3px solid #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .color-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 10px;
+            border: 2px solid #333;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            flex-shrink: 0;
+        }
+
+        .color-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .control-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn.secondary {
+            background: #ff9800;
+        }
+
+        .control-btn.secondary:hover {
+            background: #f57c00;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 2000;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .completion-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            animation: modalPop 0.5s ease-out;
+        }
+
+        @keyframes modalPop {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 15px;
+        }
+
+        .modal-text {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                flex-direction: column;
+                width: 100vw;
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .canvas-container {
+                flex: 1;
+                padding: 15px;
+            }
+            
+            .color-palette {
+                width: 100%;
+                max-height: 200px;
+                padding: 15px;
+                overflow-y: auto;
+                border-left: none;
+                border-top: 2px solid #eee;
+            }
+            
+            .color-item {
+                margin-bottom: 10px;
+                padding: 8px;
+            }
+            
+            .scene-title {
+                font-size: 20px;
+            }
+            
+            .back-button {
+                top: 10px;
+                right: 10px;
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(400px) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .confetti-piece {
+            animation: confetti-fall 3s ease-out forwards;
+        }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-button">← Hub</a>
+    
+    <div class="game-container">
+        <div class="canvas-container">
+            <div class="canvas-header">
+                <div class="scene-title" id="sceneTitle">Butterfly Garden</div>
+                <div class="progress-info">
+                    <span id="completedAreas">0</span>/<span id="totalAreas">0</span> areas colored
+                </div>
+            </div>
+            <canvas id="drawingCanvas" class="drawing-canvas"></canvas>
+        </div>
+        
+        <div class="color-palette">
+            <div class="palette-title">🎨 Color Palette</div>
+            <div id="colorPalette">
+                <!-- Colors will be generated by JavaScript -->
+            </div>
+            
+            <div class="controls">
+                <button class="control-btn" onclick="clearCanvas()">🗑️ Clear All</button>
+                <button class="control-btn secondary" onclick="showHint()">💡 Show Hint</button>
+                <button class="control-btn" onclick="nextScene()">🎯 Next Scene</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="completion-modal" id="completionModal">
+        <div class="modal-content">
+            <div class="modal-title">🎉 Amazing Work! 🎉</div>
+            <div class="modal-text">You've completed this beautiful scene!</div>
+            <button class="control-btn" onclick="nextScene(); closeModal();">Next Scene</button>
+            <button class="control-btn secondary" onclick="closeModal();">Keep Coloring</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let currentScene = 0;
+        let selectedColor = 1;
+        let completedAreas = new Set();
+        let totalAreas = 0;
+        let canvas, ctx;
+
+        // Color definitions
+        const colors = {
+            1: { color: '#FF6B6B', name: 'Red' },
+            2: { color: '#4ECDC4', name: 'Teal' },
+            3: { color: '#45B7D1', name: 'Blue' },
+            4: { color: '#96CEB4', name: 'Green' },
+            5: { color: '#FFEAA7', name: 'Yellow' },
+            6: { color: '#DDA0DD', name: 'Purple' },
+            7: { color: '#FF9A8B', name: 'Coral' },
+            8: { color: '#A8E6CF', name: 'Mint' },
+            9: { color: '#FFB347', name: 'Orange' },
+            10: { color: '#87CEEB', name: 'Sky Blue' }
+        };
+
+        // Scene definitions with regions - designed for easy clicking by kids
+        const scenes = [
+            {
+                name: 'Big Flower',
+                regions: [
+                    // Large flower center
+                    { id: 1, color: 5, path: 'M0.35,0.35 Q0.5,0.25 0.65,0.35 Q0.65,0.5 0.65,0.65 Q0.5,0.75 0.35,0.65 Q0.35,0.5 0.35,0.35 Z' },
+                    // Top petal
+                    { id: 2, color: 1, path: 'M0.4,0.1 Q0.5,0.05 0.6,0.1 Q0.6,0.25 0.5,0.3 Q0.4,0.25 0.4,0.1 Z' },
+                    // Right petal
+                    { id: 3, color: 1, path: 'M0.75,0.4 Q0.9,0.35 0.9,0.45 Q0.9,0.55 0.75,0.6 Q0.7,0.5 0.75,0.4 Z' },
+                    // Bottom petal
+                    { id: 4, color: 1, path: 'M0.4,0.75 Q0.5,0.9 0.6,0.75 Q0.6,0.7 0.5,0.7 Q0.4,0.7 0.4,0.75 Z' },
+                    // Left petal
+                    { id: 5, color: 1, path: 'M0.1,0.4 Q0.05,0.35 0.05,0.45 Q0.05,0.55 0.25,0.6 Q0.3,0.5 0.1,0.4 Z' }
+                ]
+            },
+            {
+                name: 'Simple Car',
+                regions: [
+                    // Car body (large rectangle)
+                    { id: 1, color: 2, path: 'M0.15,0.4 L0.85,0.4 L0.85,0.65 L0.15,0.65 Z' },
+                    // Car roof
+                    { id: 2, color: 3, path: 'M0.25,0.25 L0.75,0.25 L0.75,0.4 L0.25,0.4 Z' },
+                    // Left wheel (large circle)
+                    { id: 3, color: 8, path: 'M0.2,0.65 Q0.3,0.6 0.4,0.65 Q0.4,0.75 0.3,0.8 Q0.2,0.75 0.2,0.65 Z' },
+                    // Right wheel (large circle)
+                    { id: 4, color: 8, path: 'M0.6,0.65 Q0.7,0.6 0.8,0.65 Q0.8,0.75 0.7,0.8 Q0.6,0.75 0.6,0.65 Z' },
+                    // Ground
+                    { id: 5, color: 4, path: 'M0.05,0.8 L0.95,0.8 L0.95,0.9 L0.05,0.9 Z' }
+                ]
+            },
+            {
+                name: 'Happy Face',
+                regions: [
+                    // Large face circle
+                    { id: 1, color: 5, path: 'M0.2,0.2 Q0.5,0.1 0.8,0.2 Q0.9,0.5 0.8,0.8 Q0.5,0.9 0.2,0.8 Q0.1,0.5 0.2,0.2 Z' },
+                    // Left eye (big enough to click)
+                    { id: 2, color: 9, path: 'M0.3,0.35 Q0.4,0.3 0.45,0.35 Q0.45,0.45 0.4,0.5 Q0.3,0.45 0.3,0.35 Z' },
+                    // Right eye (big enough to click)
+                    { id: 3, color: 9, path: 'M0.55,0.35 Q0.65,0.3 0.7,0.35 Q0.7,0.45 0.65,0.5 Q0.55,0.45 0.55,0.35 Z' },
+                    // Large smile
+                    { id: 4, color: 1, path: 'M0.35,0.55 Q0.5,0.7 0.65,0.55 Q0.65,0.65 0.5,0.75 Q0.35,0.65 0.35,0.55 Z' }
+                ]
+            }
+        ];
+
+        function initCanvas() {
+            canvas = document.getElementById('drawingCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            resizeCanvas();
+            
+            // Add click event listener
+            canvas.addEventListener('click', handleCanvasClick);
+            canvas.addEventListener('touchstart', handleCanvasClick);
+        }
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            
+            canvas.width = rect.width - 40; // Account for padding
+            canvas.height = rect.height - 80; // Account for header and padding
+            
+            drawScene();
+        }
+
+        function drawScene() {
+            const scene = scenes[currentScene];
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Set font for numbers - scale with canvas size
+            const fontSize = Math.max(20, Math.min(canvas.width, canvas.height) * 0.04);
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Draw scene background
+            ctx.fillStyle = '#f0f8ff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw regions
+            scene.regions.forEach(region => {
+                const scaledPath = scalePathToCanvas(region.path);
+                const path2D = new Path2D(scaledPath);
+                
+                // Fill if completed
+                if (completedAreas.has(region.id)) {
+                    ctx.fillStyle = colors[region.color].color;
+                    ctx.fill(path2D);
+                }
+                
+                // Draw outline
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 5;
+                ctx.stroke(path2D);
+                
+                // Draw number if not completed
+                if (!completedAreas.has(region.id)) {
+                    // Calculate center of region for number placement
+                    const center = getRegionCenter(region.path);
+                    ctx.fillStyle = '#333';
+                    ctx.fillText(region.color.toString(), center.x * canvas.width, center.y * canvas.height);
+                }
+            });
+            
+            updateProgress();
+        }
+
+        function scalePathToCanvas(pathString) {
+            // Convert normalized coordinates (0-1) to canvas coordinates
+            return pathString.replace(/(\d+\.?\d*),(\d+\.?\d*)/g, (match, x, y) => {
+                const scaledX = Math.round(parseFloat(x) * canvas.width);
+                const scaledY = Math.round(parseFloat(y) * canvas.height);
+                return `${scaledX},${scaledY}`;
+            });
+        }
+
+        function getRegionCenter(pathString) {
+            // Find average of normalized coordinates (0-1)
+            const coords = pathString.match(/(\d+\.?\d*),(\d+\.?\d*)/g);
+            if (!coords) return { x: 0.5, y: 0.5 };
+            
+            let totalX = 0, totalY = 0;
+            coords.forEach(coord => {
+                const [x, y] = coord.split(',').map(Number);
+                totalX += x;
+                totalY += y;
+            });
+            
+            return {
+                x: totalX / coords.length,
+                y: totalY / coords.length
+            };
+        }
+
+        function handleCanvasClick(e) {
+            e.preventDefault();
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            
+            // Scale click coordinates to canvas coordinates
+            const canvasX = x * (canvas.width / rect.width);
+            const canvasY = y * (canvas.height / rect.height);
+            
+            // Check which region was clicked
+            const scene = scenes[currentScene];
+            for (const region of scene.regions) {
+                const scaledPath = scalePathToCanvas(region.path);
+                const path2D = new Path2D(scaledPath);
+                if (ctx.isPointInPath(path2D, canvasX, canvasY)) {
+                    // Check if correct color is selected
+                    if (selectedColor === region.color) {
+                        if (!completedAreas.has(region.id)) {
+                            completedAreas.add(region.id);
+                            drawScene();
+                            
+                            // Check if scene is complete
+                            if (completedAreas.size === scene.regions.length) {
+                                setTimeout(() => showCompletionModal(), 500);
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        function initColorPalette() {
+            const palette = document.getElementById('colorPalette');
+            palette.innerHTML = '';
+            
+            Object.entries(colors).forEach(([number, colorData]) => {
+                const colorItem = document.createElement('div');
+                colorItem.className = 'color-item';
+                if (parseInt(number) === selectedColor) {
+                    colorItem.classList.add('selected');
+                }
+                
+                colorItem.innerHTML = `
+                    <div class="color-number" style="background-color: ${colorData.color};">${number}</div>
+                    <div class="color-name">${colorData.name}</div>
+                `;
+                
+                colorItem.addEventListener('click', () => selectColor(parseInt(number)));
+                palette.appendChild(colorItem);
+            });
+        }
+
+        function selectColor(colorNumber) {
+            selectedColor = colorNumber;
+            
+            // Update visual selection
+            document.querySelectorAll('.color-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            document.querySelectorAll('.color-item')[colorNumber - 1].classList.add('selected');
+        }
+
+        function updateProgress() {
+            document.getElementById('completedAreas').textContent = completedAreas.size;
+            document.getElementById('totalAreas').textContent = scenes[currentScene].regions.length;
+        }
+
+        function clearCanvas() {
+            completedAreas.clear();
+            drawScene();
+        }
+
+        function showHint() {
+            // Briefly highlight all regions with their correct colors
+            const scene = scenes[currentScene];
+            
+            scene.regions.forEach(region => {
+                if (!completedAreas.has(region.id)) {
+                    const scaledPath = scalePathToCanvas(region.path);
+                    const path2D = new Path2D(scaledPath);
+                    ctx.fillStyle = colors[region.color].color;
+                    ctx.globalAlpha = 0.3;
+                    ctx.fill(path2D);
+                }
+            });
+            
+            setTimeout(() => {
+                ctx.globalAlpha = 1;
+                drawScene();
+            }, 1500);
+        }
+
+        function nextScene() {
+            currentScene = (currentScene + 1) % scenes.length;
+            completedAreas.clear();
+            
+            document.getElementById('sceneTitle').textContent = scenes[currentScene].name;
+            drawScene();
+        }
+
+        function showCompletionModal() {
+            document.getElementById('completionModal').style.display = 'flex';
+            
+            // Create confetti
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => createConfetti(), i * 100);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('completionModal').style.display = 'none';
+        }
+
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti confetti-piece';
+            
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.backgroundColor = color;
+            
+            const startX = Math.random() * window.innerWidth;
+            const startY = -10;
+            confetti.style.left = startX + 'px';
+            confetti.style.top = startY + 'px';
+            
+            const size = Math.random() * 12 + 6;
+            confetti.style.width = size + 'px';
+            confetti.style.height = size + 'px';
+            
+            document.body.appendChild(confetti);
+            
+            setTimeout(() => {
+                if (confetti.parentNode) {
+                    confetti.remove();
+                }
+            }, 3000);
+        }
+
+        // Initialize game
+        window.addEventListener('load', () => {
+            initCanvas();
+            initColorPalette();
+            
+            // Load first scene
+            document.getElementById('sceneTitle').textContent = scenes[currentScene].name;
+            drawScene();
+        });
+
+        window.addEventListener('resize', resizeCanvas);
+    </script>
+</body>
+</html>
