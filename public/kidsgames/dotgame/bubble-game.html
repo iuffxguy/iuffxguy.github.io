@@ -47,6 +47,12 @@
             animation: none;
         }
 
+        .super-bubble {
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #8b0000) !important;
+            border: 3px solid #ff0000 !important;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+        }
+
         .black-hole {
             position: absolute;
             width: 80px;
@@ -255,15 +261,111 @@
             50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
         }
+
+        .progress-container {
+            position: fixed;
+            top: 100px;
+            left: 20px;
+            width: 200px;
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin-top: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .powerup-storage {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .powerup-slot {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .powerup-slot.filled {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .powerup-slot:hover {
+            transform: scale(1.1);
+        }
+
+        .powerup-explanation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 3000;
+            font-size: 24px;
+            animation: powerup-zoom 2s ease-out forwards;
+        }
+
+        @keyframes powerup-zoom {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            80% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        }
+
+        .powerup-icon {
+            font-size: 80px;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
     <div class="game-container" id="gameContainer">
         <div class="score">Score: <span id="scoreValue">0</span></div>
         <div class="bubble-counter">Bubbles: <span id="bubbleCount">0</span>/20</div>
-        <div class="level-display" style="position: fixed; top: 100px; left: 20px; color: white; font-size: 18px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); z-index: 1000;">Level: <span id="levelValue">1</span></div>
+        <div class="progress-container">
+            <div class="level-display">Level: <span id="levelValue">1</span></div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
         <div class="instructions">Drag bubbles to the black hole!</div>
         <div class="weapon-ui" id="weaponUI"></div>
+        <div class="powerup-storage">
+            <div class="powerup-slot" id="powerupSlot1" onclick="usePowerup(0)"></div>
+            <div class="powerup-slot" id="powerupSlot2" onclick="usePowerup(1)"></div>
+            <div class="powerup-slot" id="powerupSlot3" onclick="usePowerup(2)"></div>
+        </div>
     </div>
 
     <script>
@@ -278,12 +380,15 @@
         const bubbleCountElement = document.getElementById('bubbleCount');
         const levelElement = document.getElementById('levelValue');
         const weaponUIElement = document.getElementById('weaponUI');
+        const progressFillElement = document.getElementById('progressFill');
         let blackHole = null;
         let currentWeapon = null;
         let gameOver = false;
         let chestId = 0;
         let level = 1;
         let bubblesDestroyed = 0;
+        let storedPowerups = [];
+        let maxPowerups = 3;
 
         function getRandomColor() {
             const colors = [
@@ -302,6 +407,11 @@
             bubble.className = 'bubble';
             bubble.id = `bubble-${bubbleId++}`;
             
+            // Determine if this should be a super bubble (level 4+)
+            // Level 4: 10%, Level 5: 20%, Level 6: 30%, etc.
+            const superBubbleChance = level >= 4 ? Math.min((level - 3) * 0.1, 0.8) : 0;
+            const isSuper = Math.random() < superBubbleChance;
+            
             const size = Math.random() * 60 + 40;
             bubble.style.width = size + 'px';
             bubble.style.height = size + 'px';
@@ -309,7 +419,12 @@
             bubble.style.left = Math.random() * (window.innerWidth - size) + 'px';
             bubble.style.top = Math.random() * (window.innerHeight - size) + 'px';
             
-            bubble.style.background = `radial-gradient(circle at 30% 30%, ${getRandomColor()}, rgba(255, 255, 255, 0.3))`;
+            if (isSuper) {
+                bubble.classList.add('super-bubble');
+                bubble.dataset.super = 'true';
+            } else {
+                bubble.style.background = `radial-gradient(circle at 30% 30%, ${getRandomColor()}, rgba(255, 255, 255, 0.3))`;
+            }
             
             bubble.addEventListener('mousedown', startDrag);
             bubble.addEventListener('touchstart', startDrag);
@@ -426,9 +541,14 @@
 
         function updateLevel() {
             bubblesDestroyed++;
-            if (bubblesDestroyed >= level * 20) {
+            const bubblesNeededForLevel = level * 20;
+            const progress = (bubblesDestroyed % bubblesNeededForLevel) / bubblesNeededForLevel;
+            progressFillElement.style.width = (progress * 100) + '%';
+            
+            if (bubblesDestroyed >= bubblesNeededForLevel) {
                 level++;
                 levelElement.textContent = level;
+                progressFillElement.style.width = '0%';
                 
                 // Start movement for existing bubbles when reaching level 2
                 if (level === 2) {
@@ -465,6 +585,36 @@
                     }
                 }, 2000);
             }
+        }
+
+        function createSplitBubbles(x, y) {
+            for (let i = 0; i < 2; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.id = `bubble-${bubbleId++}`;
+                
+                const size = Math.random() * 40 + 30; // Smaller than regular bubbles
+                bubble.style.width = size + 'px';
+                bubble.style.height = size + 'px';
+                
+                // Position them slightly apart from the original position
+                const offsetX = (Math.random() - 0.5) * 100;
+                const offsetY = (Math.random() - 0.5) * 100;
+                bubble.style.left = Math.max(0, Math.min(window.innerWidth - size, x + offsetX)) + 'px';
+                bubble.style.top = Math.max(0, Math.min(window.innerHeight - size, y + offsetY)) + 'px';
+                
+                bubble.style.background = `radial-gradient(circle at 30% 30%, ${getRandomColor()}, rgba(255, 255, 255, 0.3))`;
+                
+                bubble.addEventListener('mousedown', startDrag);
+                bubble.addEventListener('touchstart', startDrag);
+                
+                gameContainer.appendChild(bubble);
+                
+                if (level >= 2) {
+                    startBubbleMovement(bubble);
+                }
+            }
+            updateBubbleCount();
         }
 
         function createBlackHole() {
@@ -535,6 +685,15 @@
             
             if (distance < 60) {
                 bubble.classList.add('sucked');
+                
+                // Check if it's a super bubble and handle splitting
+                if (bubble.dataset.super === 'true') {
+                    // Create two regular bubbles
+                    setTimeout(() => {
+                        createSplitBubbles(bubbleCenterX, bubbleCenterY);
+                    }, 250);
+                }
+                
                 score++;
                 scoreElement.textContent = score;
                 updateLevel();
@@ -642,21 +801,87 @@
             const weapons = ['laser', 'dynamite', 'mega-hole'];
             const randomWeapon = weapons[Math.floor(Math.random() * weapons.length)];
             
-            currentWeapon = randomWeapon;
-            updateWeaponUI();
+            // Show powerup explanation with zoom animation
+            showPowerupExplanation(randomWeapon);
             
             createConfetti(chest.offsetLeft + 25, chest.offsetTop + 20);
             chest.remove();
         }
 
+        function showPowerupExplanation(weaponType) {
+            const weaponInfo = {
+                'laser': { icon: '🔴', name: 'Laser Cannon', description: 'Shoots lasers in all directions for 5 seconds!' },
+                'dynamite': { icon: '🧨', name: 'Pop-All Dynamite', description: 'Instantly destroys all bubbles on screen!' },
+                'mega-hole': { icon: '⚫', name: 'Super Black Hole', description: 'Creates a massive black hole that attracts bubbles!' }
+            };
+            
+            const info = weaponInfo[weaponType];
+            
+            const explanation = document.createElement('div');
+            explanation.className = 'powerup-explanation';
+            explanation.innerHTML = `
+                <div class="powerup-icon">${info.icon}</div>
+                <div>${info.name}</div>
+                <div style="font-size: 16px; margin-top: 10px;">${info.description}</div>
+            `;
+            
+            gameContainer.appendChild(explanation);
+            
+            setTimeout(() => {
+                if (explanation.parentNode) {
+                    explanation.remove();
+                }
+                // Add to storage after explanation
+                addPowerupToStorage(weaponType);
+            }, 2000);
+        }
+
+        function addPowerupToStorage(weaponType) {
+            if (storedPowerups.length < maxPowerups) {
+                storedPowerups.push(weaponType);
+                updatePowerupStorage();
+            }
+        }
+
+        function updatePowerupStorage() {
+            const weaponIcons = {
+                'laser': '🔴',
+                'dynamite': '🧨',
+                'mega-hole': '⚫'
+            };
+            
+            for (let i = 0; i < maxPowerups; i++) {
+                const slot = document.getElementById(`powerupSlot${i + 1}`);
+                if (i < storedPowerups.length) {
+                    slot.textContent = weaponIcons[storedPowerups[i]];
+                    slot.classList.add('filled');
+                } else {
+                    slot.textContent = '';
+                    slot.classList.remove('filled');
+                }
+            }
+        }
+
+        function usePowerup(slotIndex) {
+            if (slotIndex < storedPowerups.length) {
+                const weaponType = storedPowerups[slotIndex];
+                storedPowerups.splice(slotIndex, 1);
+                updatePowerupStorage();
+                
+                // Use the powerup
+                if (weaponType === 'laser') {
+                    activateLaser();
+                } else if (weaponType === 'dynamite') {
+                    popAllBubbles();
+                } else if (weaponType === 'mega-hole') {
+                    activateMegaHole();
+                }
+            }
+        }
+
         function updateWeaponUI() {
-            if (currentWeapon) {
-                const weaponNames = {
-                    'laser': '🔴 Laser Cannon (5s - Click to shoot)',
-                    'dynamite': '🧨 Pop-All Dynamite (Click to detonate)',
-                    'mega-hole': '⚫ Super Black Hole (Click to activate)'
-                };
-                weaponUIElement.innerHTML = `<div class="weapon-active">${weaponNames[currentWeapon]}</div>`;
+            if (laserActive) {
+                weaponUIElement.innerHTML = `<div class="weapon-active">🔴 Laser Active - Click to shoot!</div>`;
             } else {
                 weaponUIElement.innerHTML = '';
             }
@@ -699,6 +924,7 @@
             bubblesDestroyed = 0;
             currentWeapon = null;
             laserActive = false;
+            storedPowerups = [];
             if (laserTimeout) {
                 clearTimeout(laserTimeout);
                 laserTimeout = null;
@@ -708,8 +934,10 @@
             
             scoreElement.textContent = '0';
             levelElement.textContent = '1';
+            progressFillElement.style.width = '0%';
             updateBubbleCount();
             updateWeaponUI();
+            updatePowerupStorage();
             
             createBlackHole();
             spawnBubbles();
@@ -720,11 +948,10 @@
 
         function activateLaser() {
             laserActive = true;
-            weaponUIElement.innerHTML = `<div class="weapon-active">🔴 Laser Active - Click to shoot!</div>`;
+            updateWeaponUI();
             
             laserTimeout = setTimeout(() => {
                 laserActive = false;
-                currentWeapon = null;
                 updateWeaponUI();
             }, 5000);
         }
@@ -773,6 +1000,14 @@
                         
                         if (distanceToLine < 25 && dotProduct > 0) {
                             bubble.classList.add('sucked');
+                            
+                            // Check if it's a super bubble and handle splitting
+                            if (bubble.dataset.super === 'true') {
+                                setTimeout(() => {
+                                    createSplitBubbles(bubbleCenterX, bubbleCenterY);
+                                }, 250);
+                            }
+                            
                             score++;
                             scoreElement.textContent = score;
                             updateLevel();
@@ -803,6 +1038,14 @@
                 setTimeout(() => {
                     const rect = bubble.getBoundingClientRect();
                     bubble.classList.add('sucked');
+                    
+                    // Check if it's a super bubble and handle splitting
+                    if (bubble.dataset.super === 'true') {
+                        setTimeout(() => {
+                            createSplitBubbles(rect.left + rect.width/2, rect.top + rect.height/2);
+                        }, 250);
+                    }
+                    
                     score++;
                     scoreElement.textContent = score;
                     updateLevel();
@@ -816,9 +1059,6 @@
                     }, 500);
                 }, index * 100);
             });
-            
-            currentWeapon = null;
-            updateWeaponUI();
         }
 
         function activateMegaHole() {
@@ -836,27 +1076,18 @@
                 }, 8000);
             }
             
-            currentWeapon = null;
-            updateWeaponUI();
         }
 
         document.addEventListener('click', function(e) {
             if (!isDragging) {
                 const target = e.target;
                 
-                if (target.classList.contains('bubble') || target.classList.contains('powerup-chest')) {
+                if (target.classList.contains('bubble') || target.classList.contains('powerup-chest') || target.classList.contains('powerup-slot')) {
                     return;
                 }
                 
                 if (laserActive) {
                     fireLaser(e.clientX, e.clientY);
-                } else if (currentWeapon && currentWeapon === 'laser') {
-                    activateLaser();
-                    currentWeapon = null;
-                } else if (currentWeapon === 'dynamite') {
-                    popAllBubbles();
-                } else if (currentWeapon === 'mega-hole') {
-                    activateMegaHole();
                 }
             }
         });
