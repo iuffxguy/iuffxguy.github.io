@@ -6,4 +6,5 @@ Welcome to my personal website and blog!
 
 ## Games
 
-Check out my [Bubble Pop Game](/kidsgames/dotgame/bubble-game.html) - a fun interactive game with progressive difficulty levels!
+- [Bubble Pop Game](/kidsgames/dotgame/bubble-game.html) - A fun interactive game with progressive difficulty levels!
+- [Memory Match Game](/kidsgames/memorymatch/memory-game.html) - Find all the matching emoji pairs!
