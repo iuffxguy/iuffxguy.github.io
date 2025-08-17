@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kids Games Hub</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .main-title {
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #ffa500, #ffff00, #32cd32, #1e90ff, #9370db);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: rainbow 3s ease-in-out infinite;
+        }
+
+        @keyframes rainbow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .subtitle {
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 30px;
+        }
+
+        .games-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 40px;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .game-card:active {
+            transform: translateY(-5px);
+        }
+
+        .game-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            display: block;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .game-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-description {
+            font-size: 16px;
+            line-height: 1.4;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .game-features {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 25px;
+        }
+
+        .play-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .play-btn:active {
+            transform: scale(0.98);
+        }
+
+        .coming-soon {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            cursor: default;
+        }
+
+        .coming-soon:hover {
+            transform: none;
+            box-shadow: none;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .coming-soon .play-btn {
+            background: #888;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .coming-soon .play-btn:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        .home-link {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        .home-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 36px;
+            }
+            
+            .subtitle {
+                font-size: 20px;
+            }
+            
+            .games-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .game-card {
+                padding: 20px;
+            }
+            
+            .game-icon {
+                font-size: 60px;
+            }
+            
+            .game-title {
+                font-size: 24px;
+            }
+        }
+
+        .floating-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .shape {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+        .shape:nth-child(2) { top: 20%; right: 10%; animation-delay: 1s; }
+        .shape:nth-child(3) { bottom: 20%; left: 20%; animation-delay: 2s; }
+        .shape:nth-child(4) { bottom: 10%; right: 20%; animation-delay: 3s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-shapes">
+        <div class="shape" style="font-size: 40px;">🎮</div>
+        <div class="shape" style="font-size: 35px;">🎯</div>
+        <div class="shape" style="font-size: 45px;">🧩</div>
+        <div class="shape" style="font-size: 38px;">🎲</div>
+    </div>
+
+    <div class="header">
+        <h1 class="main-title">🎮 Kids Games Hub 🎮</h1>
+        <p class="subtitle">Fun, educational games designed for iPad play!</p>
+    </div>
+
+    <div class="games-container">
+        <div class="game-card" onclick="window.location.href='dotgame/bubble-game.html'">
+            <div class="game-icon">🫧</div>
+            <div class="game-title">Bubble Pop</div>
+            <div class="game-description">Drag colorful bubbles to the black hole in this action-packed game!</div>
+            <div class="game-features">
+                ✨ Progressive difficulty levels<br>
+                ⚡ Super bubbles that split<br>
+                🎯 Power-ups and special weapons
+            </div>
+            <a href="dotgame/bubble-game.html" class="play-btn">Play Now!</a>
+        </div>
+
+        <div class="game-card" onclick="window.location.href='memorymatch/memory-game.html'">
+            <div class="game-icon">🧠</div>
+            <div class="game-title">Memory Match</div>
+            <div class="game-description">Test your memory by finding matching emoji pairs!</div>
+            <div class="game-features">
+                🎚️ 10 progressive levels<br>
+                🃏 Beautiful card flip animations<br>
+                🏆 Challenge your brain power
+            </div>
+            <a href="memorymatch/memory-game.html" class="play-btn">Play Now!</a>
+        </div>
+
+        <div class="game-card coming-soon">
+            <div class="game-icon">🎨</div>
+            <div class="game-title">Color Match</div>
+            <div class="game-description">Touch the matching colors as they appear with increasing speed!</div>
+            <div class="game-features">
+                🌈 Learn colors and patterns<br>
+                ⚡ Fast-paced action<br>
+                🎯 Precision training
+            </div>
+            <span class="play-btn">Coming Soon</span>
+        </div>
+
+        <div class="game-card coming-soon">
+            <div class="game-icon">🔢</div>
+            <div class="game-title">Number Hunt</div>
+            <div class="game-description">Find numbers in sequence to learn counting and number recognition!</div>
+            <div class="game-features">
+                📊 Educational counting<br>
+                🎯 Number recognition<br>
+                🏃 Progressive difficulty
+            </div>
+            <span class="play-btn">Coming Soon</span>
+        </div>
+
+        <div class="game-card coming-soon">
+            <div class="game-icon">🔸</div>
+            <div class="game-title">Shape Sorter</div>
+            <div class="game-description">Drag and drop shapes into the correct containers!</div>
+            <div class="game-features">
+                📐 Learn geometry basics<br>
+                🎯 Shape recognition<br>
+                🧩 Problem solving
+            </div>
+            <span class="play-btn">Coming Soon</span>
+        </div>
+
+        <div class="game-card coming-soon">
+            <div class="game-icon">✏️</div>
+            <div class="game-title">Drawing Canvas</div>
+            <div class="game-description">A simple drawing app with different brushes and colors!</div>
+            <div class="game-features">
+                🎨 Multiple brush sizes<br>
+                🌈 Color palette<br>
+                💾 Save your artwork
+            </div>
+            <span class="play-btn">Coming Soon</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Safe, ad-free games designed with kids in mind</p>
+        <a href="/" class="home-link">← Back to Main Site</a>
+    </div>
+</body>
+</html>

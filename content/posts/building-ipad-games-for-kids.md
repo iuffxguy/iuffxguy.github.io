@@ -6,7 +6,7 @@ categories: ["develop"]
 
 I've been thinking about creating a collection of simple, engaging games that my kids can play on their iPad. Not the typical app store downloads with ads and in-app purchases, but clean, educational web-based games that just work.
 
-**Try the first game**: [Bubble Pop Game](/kidsgames/dotgame/bubble-game.html)
+**🎮 [Visit the Kids Games Hub](/kidsgames/) to play!**
 
 ## The Vision
 
