@@ -178,24 +178,24 @@
             .main-title {
                 font-size: 36px;
             }
-            
+
             .subtitle {
                 font-size: 20px;
             }
-            
+
             .games-container {
                 grid-template-columns: 1fr;
                 gap: 20px;
             }
-            
+
             .game-card {
                 padding: 20px;
             }
-            
+
             .game-icon {
                 font-size: 60px;
             }
-            
+
             .game-title {
                 font-size: 24px;
             }
@@ -238,7 +238,7 @@
 
     <div class="header">
         <h1 class="main-title">🎮 Kids Games Hub 🎮</h1>
-        <p class="subtitle">Fun, educational games designed for iPad play!</p>
+        <p class="subtitle">Fun, educational games designed for touchscreen devices!</p>
     </div>
 
     <div class="games-container">
@@ -266,8 +266,20 @@
             <a href="memorymatch/memory-game.html" class="play-btn">Play Now!</a>
         </div>
 
-        <div class="game-card coming-soon">
+        <div class="game-card" onclick="window.location.href='shapedraw/shape-draw.html'">
             <div class="game-icon">🎨</div>
+            <div class="game-title">Shape Drawing</div>
+            <div class="game-description">Look at the object and try to draw it! Practice your drawing skills with 100+ fun objects!</div>
+            <div class="game-features">
+                🎨 100+ objects to draw<br>
+                ✏️ Fullscreen drawing canvas<br>
+                🔄 Endless variety
+            </div>
+            <a href="shapedraw/shape-draw.html" class="play-btn">Play Now!</a>
+        </div>
+
+        <div class="game-card coming-soon">
+            <div class="game-icon">🌈</div>
             <div class="game-title">Color Match</div>
             <div class="game-description">Touch the matching colors as they appear with increasing speed!</div>
             <div class="game-features">
