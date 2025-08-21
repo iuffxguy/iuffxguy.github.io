@@ -39,6 +39,26 @@
             z-index: 100;
         }
 
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
         .level-info {
             font-size: 2em;
             margin-bottom: 10px;
@@ -230,6 +250,8 @@
 </head>
 <body>
     <div class="game-container">
+        <a href="../index.html" class="back-button">← Games Hub</a>
+        
         <div class="header">
             <div class="level-info">Level <span id="current-level">1</span></div>
             <div class="instructions">Drag numbers to boxes in order: 1, 2, 3...</div>
