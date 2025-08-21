@@ -2,31 +2,38 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on philseguin.com</title>
-    <link>http://localhost:1313/posts/</link>
+    <link>https://iuffxguy.github.io/posts/</link>
     <description>Recent content in Posts on philseguin.com</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 17 Aug 2025 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 21 Aug 2025 10:30:00 -0500</lastBuildDate>
+    <atom:link href="https://iuffxguy.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Building and Launching My First iPhone App with AI</title>
+      <link>https://iuffxguy.github.io/posts/freeze-dry-tracker-app/</link>
+      <pubDate>Thu, 21 Aug 2025 10:30:00 -0500</pubDate>
+      <guid>https://iuffxguy.github.io/posts/freeze-dry-tracker-app/</guid>
+      <description>For years I&amp;rsquo;ve wanted to create and launch my own iPhone app, but the complexity of mobile development always felt overwhelming. With all the advancements in AI tools lately, I figured this was as good a time as any to finally make it happen. Using Cursor as my AI coding companion, I was able to build an entire app from scratch - something that would have taken me months before took just weeks.</description>
+    </item>
     <item>
       <title>Building a Collection of iPad-Friendly Games for Kids</title>
-      <link>http://localhost:1313/posts/building-ipad-games-for-kids/</link>
+      <link>https://iuffxguy.github.io/posts/building-ipad-games-for-kids/</link>
       <pubDate>Sun, 17 Aug 2025 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/building-ipad-games-for-kids/</guid>
+      <guid>https://iuffxguy.github.io/posts/building-ipad-games-for-kids/</guid>
       <description>I&amp;rsquo;ve been thinking about creating a collection of simple, engaging games that my kids can play on their iPad. Not the typical app store downloads with ads and in-app purchases, but clean, educational web-based games that just work.&#xA;🎮 Visit the Kids Games Hub to play!&#xA;The Vision The goal is to build a series of HTML5 games that are:&#xA;Touch-optimized: Designed specifically for tablet interaction Educational: Subtly teaching concepts like counting, colors, patterns, and problem-solving Distraction-free: No ads, no external links, no data collection Offline-capable: Can be saved as bookmarks and work without internet Progressive: Games that adapt difficulty as kids improve Why Web Games?</description>
     </item>
     <item>
       <title>Parkinsons Law</title>
-      <link>http://localhost:1313/posts/parkinsons-law/</link>
+      <link>https://iuffxguy.github.io/posts/parkinsons-law/</link>
       <pubDate>Wed, 22 Feb 2023 06:51:12 -0500</pubDate>
-      <guid>http://localhost:1313/posts/parkinsons-law/</guid>
+      <guid>https://iuffxguy.github.io/posts/parkinsons-law/</guid>
       <description>Link: https://en.m.wikipedia.org/wiki/Parkinson%27s_law&#xA;I find this law really interesting because of the many ways it impacts our lives. The idea that things will always find a way to fill the free space you give it makes sense when you think of ways we see this in our everyday lives such as:&#xA;The extra storage which seemed huge when you first bought your house is now full years later Always needing more hard drive space A simple task can takes weeks to get done if you give it weeks to get done What&amp;rsquo;s more interesting to me though is how this applies to companies as well.</description>
     </item>
     <item>
       <title>Found the first mobile game I ever built</title>
-      <link>http://localhost:1313/posts/ti-83-programmer/</link>
+      <link>https://iuffxguy.github.io/posts/ti-83-programmer/</link>
       <pubDate>Mon, 20 Feb 2023 21:40:56 -0500</pubDate>
-      <guid>http://localhost:1313/posts/ti-83-programmer/</guid>
+      <guid>https://iuffxguy.github.io/posts/ti-83-programmer/</guid>
       <description>Link: https://www.ticalc.org/archives/files/fileinfo/2/280.html&#xA;In 1997, a &amp;lsquo;mobile&amp;rsquo; device was a bit different than today&amp;rsquo;s amazing phones.&#xA;By learning TI-83 Basic I got my first introduction into loops, conditional statements, &amp;ldquo;functions&amp;rdquo;, and much more. It was all so fascinating to me that I could build programs and play them all on this same device that I could bring anywhere with me (including school).&#xA;What was weird about coming across this was my close friends know I have always had a strange obsession with horse racing.</description>
     </item>
   </channel>
