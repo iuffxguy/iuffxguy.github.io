@@ -6,6 +6,7 @@ googleAnalytics = 'G-9PWRFZ9B2L'
 
 
 [params]
+  headTitle = "philseguin.com"
   [params.author]
     name = "Phil Seguin"
 extraHead = ''
