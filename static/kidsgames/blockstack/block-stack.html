@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Stacking Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: linear-gradient(135deg, #87CEEB, #98FB98);
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        .block-spawner {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .spawn-button {
+            width: 60px;
+            height: 60px;
+            border: 3px solid #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+
+        .spawn-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .spawn-button:active {
+            transform: scale(0.95);
+        }
+
+        .square-btn {
+            background: #FF6B6B;
+            border-radius: 8px;
+        }
+
+        .rectangle-btn {
+            background: #4ECDC4;
+            border-radius: 8px;
+            width: 80px;
+        }
+
+        .triangle-btn {
+            background: #45B7D1;
+            border-radius: 8px;
+        }
+
+        .circle-btn {
+            background: #96CEB4;
+            border-radius: 50%;
+        }
+
+        .big-square-btn {
+            background: #FF9F43;
+            border-radius: 8px;
+            width: 80px;
+        }
+
+        .roof-btn {
+            background: #A0522D;
+            border-radius: 8px;
+        }
+
+        .block {
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+            transition: none;
+            border: 3px solid #333;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .block:active {
+            cursor: grabbing;
+        }
+
+        .block.dragging {
+            z-index: 100;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .square-block {
+            width: 50px;
+            height: 50px;
+            background: #FF6B6B;
+            border-radius: 5px;
+        }
+
+        .rectangle-block {
+            width: 80px;
+            height: 40px;
+            background: #4ECDC4;
+            border-radius: 5px;
+        }
+
+        .triangle-block {
+            width: 0;
+            height: 0;
+            background: transparent;
+            border: none;
+            border-left: 25px solid transparent;
+            border-right: 25px solid transparent;
+            border-bottom: 50px solid #45B7D1;
+            border-radius: 0;
+        }
+
+        .circle-block {
+            width: 50px;
+            height: 50px;
+            background: #96CEB4;
+            border-radius: 50%;
+        }
+
+        .big-square-block {
+            width: 80px;
+            height: 80px;
+            background: #FF9F43;
+            border-radius: 5px;
+        }
+
+        .roof-block {
+            width: 0;
+            height: 0;
+            background: transparent;
+            border: none;
+            border-left: 40px solid transparent;
+            border-right: 40px solid transparent;
+            border-bottom: 50px solid #A0522D;
+            border-radius: 0;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .control-button {
+            background: #FF6B6B;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .control-button.clear {
+            background: #E74C3C;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: linear-gradient(to top, #8B4513, #DEB887);
+            border-top: 3px solid #654321;
+            z-index: 0;
+        }
+
+        .instructions {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            max-width: 200px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .block-count {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .trash-hole {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle at center, #2C3E50, #34495E, #2C3E50);
+            border-radius: 50%;
+            border: 4px solid #1A252F;
+            box-shadow: 
+                inset 0 0 20px rgba(0, 0, 0, 0.8),
+                0 4px 15px rgba(0, 0, 0, 0.6);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            animation: hole-pulse 2s ease-in-out infinite;
+        }
+
+        .trash-hole:before {
+            content: '🗑️';
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5));
+        }
+
+        @keyframes hole-pulse {
+            0%, 100% { 
+                transform: scale(1); 
+                box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 4px 15px rgba(0, 0, 0, 0.6);
+            }
+            50% { 
+                transform: scale(1.05); 
+                box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.9), 0 6px 20px rgba(0, 0, 0, 0.8);
+            }
+        }
+
+        .trash-hole.highlight {
+            border-color: #E74C3C;
+            box-shadow: 
+                inset 0 0 25px rgba(0, 0, 0, 0.9),
+                0 4px 20px rgba(231, 76, 60, 0.6),
+                0 0 30px rgba(231, 76, 60, 0.4);
+            animation: hole-ready 0.5s ease-in-out infinite;
+        }
+
+        @keyframes hole-ready {
+            0%, 100% { transform: scale(1.05); }
+            50% { transform: scale(1.1); }
+        }
+
+        .animal-toolbar {
+            position: fixed;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            z-index: 1000;
+        }
+
+        .animal-toggle {
+            width: 60px;
+            height: 60px;
+            background: #FF9500;
+            border: 3px solid #333;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .animal-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .animal-palette {
+            position: absolute;
+            left: 80px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            display: none;
+            flex-wrap: wrap;
+            gap: 10px;
+            width: 280px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .animal-palette.show {
+            display: flex;
+        }
+
+        .animal-item {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            user-select: none;
+            background: white;
+        }
+
+        .animal-item:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .animal-item:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+
+        .animal-block {
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+            transition: none;
+            border: 3px solid #333;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            background: white;
+            border-radius: 8px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .animal-block:active {
+            cursor: grabbing;
+        }
+
+        .animal-block.dragging {
+            z-index: 100;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <a href="../index.html" class="back-button">← Hub</a>
+        
+        <div class="block-count">
+            Blocks: <span id="blockCount">0</span>
+        </div>
+
+        <div class="block-spawner">
+            <div class="spawn-button square-btn" onclick="spawnBlock('square')">Square</div>
+            <div class="spawn-button big-square-btn" onclick="spawnBlock('big-square')">Big Square</div>
+            <div class="spawn-button rectangle-btn" onclick="spawnBlock('rectangle')">Rectangle</div>
+            <div class="spawn-button triangle-btn" onclick="spawnBlock('triangle')">Triangle</div>
+            <div class="spawn-button roof-btn" onclick="spawnBlock('roof')">Roof</div>
+            <div class="spawn-button circle-btn" onclick="spawnBlock('circle')">Circle</div>
+        </div>
+
+        <div class="animal-toolbar">
+            <div class="animal-toggle" onclick="toggleAnimalPalette()">🐾</div>
+            <div class="animal-palette" id="animalPalette">
+                <div class="animal-item" data-animal="dog" data-sound="woof">🐕</div>
+                <div class="animal-item" data-animal="cat" data-sound="meow">🐱</div>
+                <div class="animal-item" data-animal="cow" data-sound="moo">🐄</div>
+                <div class="animal-item" data-animal="pig" data-sound="oink">🐷</div>
+                <div class="animal-item" data-animal="sheep" data-sound="baa">🐑</div>
+                <div class="animal-item" data-animal="horse" data-sound="neigh">🐴</div>
+                <div class="animal-item" data-animal="duck" data-sound="quack">🦆</div>
+                <div class="animal-item" data-animal="chicken" data-sound="cluck">🐔</div>
+                <div class="animal-item" data-animal="frog" data-sound="ribbit">🐸</div>
+                <div class="animal-item" data-animal="lion" data-sound="roar">🦁</div>
+                <div class="animal-item" data-animal="elephant" data-sound="trumpet">🐘</div>
+                <div class="animal-item" data-animal="monkey" data-sound="oook">🐵</div>
+                <div class="animal-item" data-animal="bird" data-sound="tweet">🐦</div>
+                <div class="animal-item" data-animal="owl" data-sound="hoot">🦉</div>
+                <div class="animal-item" data-animal="bear" data-sound="growl">🐻</div>
+                <div class="animal-item" data-animal="rabbit" data-sound="thump">🐰</div>
+                <div class="animal-item" data-animal="snake" data-sound="hiss">🐍</div>
+                <div class="animal-item" data-animal="bee" data-sound="buzz">🐝</div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <strong>How to Play:</strong><br>
+            • Click buttons to spawn blocks<br>
+            • Drag blocks to stack them<br>
+            • Watch them fall with gravity!<br>
+            • Build tall towers!
+        </div>
+
+        <div class="ground"></div>
+        <div class="trash-hole" id="trashHole"></div>
+
+        <div class="controls">
+            <button class="control-button clear" onclick="clearAllBlocks()">Clear All</button>
+        </div>
+    </div>
+
+    <script>
+        let blockId = 0;
+        let isDragging = false;
+        let dragElement = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+        let blocks = [];
+        let animalPaletteOpen = false;
+        
+        
+        const gameContainer = document.getElementById('gameContainer');
+        const blockCountElement = document.getElementById('blockCount');
+        const trashHole = document.getElementById('trashHole');
+        
+        // Physics constants
+        const GRAVITY = 0.5;
+        const BOUNCE = 0.3;
+        const FRICTION = 0.95;
+        const GROUND_Y = window.innerHeight - 50;
+
+        function spawnBlock(type) {
+            const block = document.createElement('div');
+            block.className = `block ${type}-block`;
+            block.id = `block-${blockId++}`;
+            
+            // Start position at top center
+            let startX = window.innerWidth / 2;
+            let startY = 120;
+            
+            // Adjust start position based on block type
+            if (type === 'rectangle') {
+                startX -= 40; // half width
+            } else if (type === 'triangle') {
+                startX -= 25; // half width
+            } else if (type === 'big-square') {
+                startX -= 40; // half width
+            } else if (type === 'roof') {
+                startX -= 40; // half width
+            } else {
+                startX -= 25; // half width for square/circle
+            }
+            
+            block.style.left = startX + 'px';
+            block.style.top = startY + 'px';
+            
+            // Add drag events
+            block.addEventListener('mousedown', startDrag);
+            block.addEventListener('touchstart', startDrag);
+            
+            gameContainer.appendChild(block);
+            
+            // Create physics object
+            const blockObj = {
+                element: block,
+                x: startX,
+                y: startY,
+                vx: 0, // velocity x
+                vy: 0, // velocity y
+                width: getBlockWidth(type),
+                height: getBlockHeight(type),
+                type: type,
+                grounded: false,
+                beingDragged: false
+            };
+            
+            blocks.push(blockObj);
+            updateBlockCount();
+            
+            // Start physics
+            if (!window.physicsRunning) {
+                startPhysics();
+            }
+        }
+
+        function getBlockWidth(type) {
+            switch(type) {
+                case 'square': return 50;
+                case 'big-square': return 80;
+                case 'rectangle': return 80;
+                case 'triangle': return 50;
+                case 'roof': return 80;
+                case 'circle': return 50;
+                case 'animal': return 50;
+                default: return 50;
+            }
+        }
+
+        function getBlockHeight(type) {
+            switch(type) {
+                case 'square': return 50;
+                case 'big-square': return 80;
+                case 'rectangle': return 40;
+                case 'triangle': return 50;
+                case 'roof': return 50;
+                case 'circle': return 50;
+                case 'animal': return 50;
+                default: return 50;
+            }
+        }
+
+        function startDrag(e) {
+            e.preventDefault();
+            isDragging = true;
+            dragElement = e.target;
+            dragElement.classList.add('dragging');
+            
+            // Find the block object
+            const blockObj = blocks.find(b => b.element === dragElement);
+            if (blockObj) {
+                blockObj.beingDragged = true;
+                blockObj.vx = 0;
+                blockObj.vy = 0;
+            }
+            
+            const rect = dragElement.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            dragOffsetX = clientX - rect.left;
+            dragOffsetY = clientY - rect.top;
+        }
+
+        function drag(e) {
+            if (!isDragging || !dragElement) return;
+            
+            e.preventDefault();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            const newX = clientX - dragOffsetX;
+            const newY = clientY - dragOffsetY;
+            
+            dragElement.style.left = newX + 'px';
+            dragElement.style.top = newY + 'px';
+            
+            // Update physics object position
+            const blockObj = blocks.find(b => b.element === dragElement);
+            if (blockObj) {
+                blockObj.x = newX;
+                blockObj.y = newY;
+            }
+            
+            // Check if dragging over trash hole
+            checkTrashHoleProximity(clientX, clientY);
+        }
+
+        function endDrag(e) {
+            if (!isDragging || !dragElement) return;
+            
+            const clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
+            const clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
+            
+            // Check if dropped on trash hole
+            if (isOverTrashHole(clientX, clientY)) {
+                trashBlock(dragElement);
+            }
+            
+            const blockObj = blocks.find(b => b.element === dragElement);
+            if (blockObj) {
+                blockObj.beingDragged = false;
+            }
+            
+            dragElement.classList.remove('dragging');
+            trashHole.classList.remove('highlight');
+            isDragging = false;
+            dragElement = null;
+        }
+
+        function startPhysics() {
+            if (window.physicsRunning) return;
+            window.physicsRunning = true;
+            
+            function physicsLoop() {
+                if (blocks.length === 0) {
+                    window.physicsRunning = false;
+                    return;
+                }
+                
+                blocks.forEach(block => {
+                    if (block.beingDragged) return;
+                    
+                    // Apply gravity
+                    block.vy += GRAVITY;
+                    
+                    // Update position
+                    block.x += block.vx;
+                    block.y += block.vy;
+                    
+                    // Ground collision
+                    const groundCollision = block.y + block.height >= GROUND_Y;
+                    if (groundCollision) {
+                        block.y = GROUND_Y - block.height;
+                        block.vy *= -BOUNCE;
+                        block.vx *= FRICTION;
+                        block.grounded = true;
+                        
+                        if (Math.abs(block.vy) < 1) {
+                            block.vy = 0;
+                        }
+                    } else {
+                        block.grounded = false;
+                    }
+                    
+                    // Wall collisions
+                    if (block.x < 0) {
+                        block.x = 0;
+                        block.vx *= -BOUNCE;
+                    }
+                    if (block.x + block.width > window.innerWidth) {
+                        block.x = window.innerWidth - block.width;
+                        block.vx *= -BOUNCE;
+                    }
+                    
+                    // Block-to-block collisions
+                    blocks.forEach(otherBlock => {
+                        if (otherBlock === block || otherBlock.beingDragged) return;
+                        
+                        if (isColliding(block, otherBlock)) {
+                            resolveCollision(block, otherBlock);
+                        }
+                    });
+                    
+                    // Update DOM position
+                    block.element.style.left = block.x + 'px';
+                    block.element.style.top = block.y + 'px';
+                });
+                
+                requestAnimationFrame(physicsLoop);
+            }
+            
+            physicsLoop();
+        }
+
+        function isColliding(block1, block2) {
+            return block1.x < block2.x + block2.width &&
+                   block1.x + block1.width > block2.x &&
+                   block1.y < block2.y + block2.height &&
+                   block1.y + block1.height > block2.y;
+        }
+
+        function resolveCollision(block1, block2) {
+            // Simple collision resolution - separate blocks
+            const overlapX = Math.min(block1.x + block1.width - block2.x, block2.x + block2.width - block1.x);
+            const overlapY = Math.min(block1.y + block1.height - block2.y, block2.y + block2.height - block1.y);
+            
+            if (overlapX < overlapY) {
+                // Horizontal collision
+                if (block1.x < block2.x) {
+                    block1.x -= overlapX / 2;
+                    block2.x += overlapX / 2;
+                } else {
+                    block1.x += overlapX / 2;
+                    block2.x -= overlapX / 2;
+                }
+                
+                const tempVx = block1.vx;
+                block1.vx = block2.vx * BOUNCE;
+                block2.vx = tempVx * BOUNCE;
+            } else {
+                // Vertical collision
+                if (block1.y < block2.y) {
+                    block1.y -= overlapY / 2;
+                    block2.y += overlapY / 2;
+                } else {
+                    block1.y += overlapY / 2;
+                    block2.y -= overlapY / 2;
+                }
+                
+                const tempVy = block1.vy;
+                block1.vy = block2.vy * BOUNCE;
+                block2.vy = tempVy * BOUNCE;
+            }
+        }
+
+        function clearAllBlocks() {
+            blocks.forEach(block => {
+                if (block.element.parentNode) {
+                    block.element.remove();
+                }
+            });
+            blocks = [];
+            updateBlockCount();
+        }
+
+        function updateBlockCount() {
+            blockCountElement.textContent = blocks.length;
+        }
+
+        function checkTrashHoleProximity(x, y) {
+            if (isOverTrashHole(x, y)) {
+                trashHole.classList.add('highlight');
+            } else {
+                trashHole.classList.remove('highlight');
+            }
+        }
+
+        function isOverTrashHole(x, y) {
+            const trashRect = trashHole.getBoundingClientRect();
+            const trashCenterX = trashRect.left + trashRect.width / 2;
+            const trashCenterY = trashRect.top + trashRect.height / 2;
+            
+            const distance = Math.sqrt(
+                Math.pow(x - trashCenterX, 2) + Math.pow(y - trashCenterY, 2)
+            );
+            
+            return distance < 50; // Within 50px of trash hole center
+        }
+
+        function trashBlock(blockElement) {
+            // Find and remove the block from the blocks array
+            const blockIndex = blocks.findIndex(b => b.element === blockElement);
+            if (blockIndex !== -1) {
+                blocks.splice(blockIndex, 1);
+            }
+            
+            // Animate block shrinking into trash hole
+            const trashRect = trashHole.getBoundingClientRect();
+            const trashCenterX = trashRect.left + trashRect.width / 2;
+            const trashCenterY = trashRect.top + trashRect.height / 2;
+            
+            blockElement.style.transition = 'all 0.3s ease-out';
+            blockElement.style.left = (trashCenterX - 25) + 'px';
+            blockElement.style.top = (trashCenterY - 25) + 'px';
+            blockElement.style.transform = 'scale(0) rotate(180deg)';
+            blockElement.style.opacity = '0';
+            
+            // Remove from DOM after animation
+            setTimeout(() => {
+                if (blockElement.parentNode) {
+                    blockElement.remove();
+                }
+                updateBlockCount();
+            }, 300);
+        }
+
+        // Event listeners
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag);
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            GROUND_Y = window.innerHeight - 50;
+        });
+        
+        // Animal palette functions
+        function toggleAnimalPalette() {
+            const palette = document.getElementById('animalPalette');
+            animalPaletteOpen = !animalPaletteOpen;
+            
+            if (animalPaletteOpen) {
+                palette.classList.add('show');
+            } else {
+                palette.classList.remove('show');
+            }
+        }
+        
+        // Animal drag functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const animalItems = document.querySelectorAll('.animal-item');
+            
+            animalItems.forEach(item => {
+                item.addEventListener('mousedown', startAnimalDrag);
+                item.addEventListener('touchstart', startAnimalDrag);
+            });
+        });
+        
+        function startAnimalDrag(e) {
+            e.preventDefault();
+            const animalType = e.target.dataset.animal;
+            const animalEmoji = e.target.textContent;
+            
+            // Create animal block
+            const animalBlock = document.createElement('div');
+            animalBlock.className = 'animal-block';
+            animalBlock.id = `animal-${blockId++}`;
+            animalBlock.dataset.animal = animalType;
+            animalBlock.textContent = animalEmoji;
+            
+            // Position at mouse/touch location
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            animalBlock.style.left = (clientX - 25) + 'px';
+            animalBlock.style.top = (clientY - 25) + 'px';
+            
+            gameContainer.appendChild(animalBlock);
+            
+            // Set up dragging for the new animal block
+            isDragging = true;
+            dragElement = animalBlock;
+            dragElement.classList.add('dragging');
+            dragOffsetX = 25; // Center the drag
+            dragOffsetY = 25;
+            
+            // Create physics object for animal
+            const animalObj = {
+                element: animalBlock,
+                x: clientX - 25,
+                y: clientY - 25,
+                vx: 0,
+                vy: 0,
+                width: 50,
+                height: 50,
+                type: 'animal',
+                animal: animalType,
+                grounded: false,
+                beingDragged: true
+            };
+            
+            blocks.push(animalObj);
+            updateBlockCount();
+            
+            
+            // Add drag events
+            animalBlock.addEventListener('mousedown', startDrag);
+            animalBlock.addEventListener('touchstart', startDrag);
+            
+            // Start physics if not running
+            if (!window.physicsRunning) {
+                startPhysics();
+            }
+        }
+        
+        
+        // Close animal palette when clicking outside
+        document.addEventListener('click', function(e) {
+            const toolbar = document.querySelector('.animal-toolbar');
+            if (animalPaletteOpen && !toolbar.contains(e.target)) {
+                toggleAnimalPalette();
+            }
+        });
+    </script>
+</body>
+</html>
