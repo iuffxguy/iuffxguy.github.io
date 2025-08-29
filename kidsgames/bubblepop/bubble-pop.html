@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Pop Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: linear-gradient(135deg, #87CEEB, #4682B4);
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            cursor: crosshair;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.3));
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            animation: float 3s ease-in-out infinite;
+            user-select: none;
+            transition: transform 0.1s ease;
+        }
+
+        .bubble:hover {
+            transform: scale(1.1);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        @keyframes rise {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-100vh); }
+        }
+
+        .bubble.rising {
+            animation: rise linear forwards;
+        }
+
+        .bubble.popping {
+            animation: pop 0.4s ease-out forwards;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(0) rotate(0deg) translateX(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(300px) rotate(720deg) translateX(var(--drift, 0px));
+                opacity: 0;
+            }
+        }
+
+        .confetti-piece {
+            animation: confetti-fall 1.5s ease-out forwards;
+        }
+
+        .score {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .clear-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .clear-button:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .back-button {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .game-info {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            color: white;
+            font-size: 16px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <div class="score">Score: <span id="scoreValue">0</span></div>
+        <button class="clear-button" onclick="clearGame()">Clear</button>
+        <a href="../index.html" class="back-button">← Hub</a>
+        <div class="game-info">
+            <div>Click bubbles to pop them!</div>
+            <div>Bubbles: <span id="bubbleCount">0</span></div>
+        </div>
+    </div>
+
+    <script>
+        let score = 0;
+        let bubbleId = 0;
+        let spawnRate = 1200; // milliseconds between bubbles
+        let bubbleSpeed = 6000; // milliseconds to rise to top
+        let gameRunning = true;
+        
+        const gameContainer = document.getElementById('gameContainer');
+        const scoreElement = document.getElementById('scoreValue');
+        const bubbleCountElement = document.getElementById('bubbleCount');
+
+        function getRandomColor() {
+            const colors = [
+                'rgba(255, 182, 193, 0.9)', // light pink
+                'rgba(173, 216, 230, 0.9)', // light blue
+                'rgba(144, 238, 144, 0.9)', // light green
+                'rgba(255, 218, 185, 0.9)', // peach
+                'rgba(221, 160, 221, 0.9)', // plum
+                'rgba(255, 255, 224, 0.9)', // light yellow
+                'rgba(255, 160, 122, 0.9)', // light salmon
+                'rgba(176, 196, 222, 0.9)'  // light steel blue
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function createBubble() {
+            if (!gameRunning) return;
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.id = `bubble-${bubbleId++}`;
+            
+            const size = Math.random() * 60 + 40; // 40-100px
+            bubble.style.width = size + 'px';
+            bubble.style.height = size + 'px';
+            
+            // Start at bottom of screen
+            bubble.style.left = Math.random() * (window.innerWidth - size) + 'px';
+            bubble.style.top = (window.innerHeight - size) + 'px';
+            
+            const color = getRandomColor();
+            bubble.style.background = `radial-gradient(circle at 30% 30%, ${color}, rgba(255, 255, 255, 0.3))`;
+            
+            // Add click event
+            bubble.addEventListener('click', function(e) {
+                e.preventDefault();
+                popBubble(bubble);
+            });
+            
+            gameContainer.appendChild(bubble);
+            updateBubbleCount();
+            
+            // Start rising animation
+            setTimeout(() => {
+                if (bubble.parentNode) {
+                    bubble.classList.add('rising');
+                    bubble.style.animationDuration = bubbleSpeed + 'ms';
+                    
+                    // Remove bubble when it reaches top
+                    setTimeout(() => {
+                        if (bubble.parentNode) {
+                            bubble.remove();
+                            updateBubbleCount();
+                        }
+                    }, bubbleSpeed);
+                }
+            }, 100);
+        }
+
+        function popBubble(bubble) {
+            if (bubble.classList.contains('popping')) return;
+            
+            // Get bubble's current animated position using getBoundingClientRect
+            const rect = bubble.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            // Stop the rising animation and fix the bubble at its current position
+            bubble.classList.remove('rising');
+            bubble.style.left = rect.left + 'px';
+            bubble.style.top = rect.top + 'px';
+            bubble.classList.add('popping');
+            
+            // Create confetti at the bubble's current animated position
+            createConfetti(centerX, centerY);
+            
+            // Update score
+            score++;
+            scoreElement.textContent = score;
+            
+            // Remove bubble after animation
+            setTimeout(() => {
+                if (bubble.parentNode) {
+                    bubble.remove();
+                    updateBubbleCount();
+                }
+            }, 400);
+        }
+
+        function createConfetti(x, y) {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd', '#98d8c8', '#f7dc6f'];
+            
+            for (let i = 0; i < 12; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti confetti-piece';
+                
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.backgroundColor = color;
+                
+                // Start position with some spread
+                const startX = x + (Math.random() - 0.5) * 40;
+                const startY = y + (Math.random() - 0.5) * 40;
+                confetti.style.left = startX + 'px';
+                confetti.style.top = startY + 'px';
+                
+                // Random size
+                const size = Math.random() * 6 + 4;
+                confetti.style.width = size + 'px';
+                confetti.style.height = size + 'px';
+                
+                // Random drift
+                const drift = (Math.random() - 0.5) * 150;
+                confetti.style.setProperty('--drift', drift + 'px');
+                
+                // Random animation duration
+                const duration = Math.random() * 0.5 + 1.2;
+                confetti.style.animationDuration = duration + 's';
+                
+                gameContainer.appendChild(confetti);
+                
+                // Remove after animation
+                setTimeout(() => {
+                    if (confetti.parentNode) {
+                        confetti.remove();
+                    }
+                }, duration * 1000);
+            }
+        }
+
+        function updateBubbleCount() {
+            const bubbles = document.querySelectorAll('.bubble').length;
+            bubbleCountElement.textContent = bubbles;
+        }
+
+        function clearGame() {
+            // Remove all bubbles and confetti
+            document.querySelectorAll('.bubble, .confetti').forEach(el => el.remove());
+            
+            // Reset score
+            score = 0;
+            scoreElement.textContent = '0';
+            updateBubbleCount();
+            
+            // Reset spawn rate
+            spawnRate = 1200;
+            bubbleSpeed = 6000;
+        }
+
+        function increaseDifficulty() {
+            // Gradually increase spawn rate (faster spawning)
+            if (spawnRate > 800) {
+                spawnRate -= 50;
+            }
+            
+            // Gradually increase bubble speed (faster rising)
+            if (bubbleSpeed > 4000) {
+                bubbleSpeed -= 100;
+            }
+        }
+
+        function spawnBubbles() {
+            if (!gameRunning) return;
+            
+            createBubble();
+            
+            // Increase difficulty every 10 bubbles spawned
+            if (bubbleId % 10 === 0) {
+                increaseDifficulty();
+            }
+            
+            setTimeout(spawnBubbles, spawnRate);
+        }
+
+        // Start the game
+        spawnBubbles();
+    </script>
+</body>
+</html>
