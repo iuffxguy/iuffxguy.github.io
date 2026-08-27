@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Train Track Builder</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: linear-gradient(135deg, #87CEEB, #98FB98);
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        .toolbar {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .track-button {
+            width: 80px;
+            height: 80px;
+            border: 3px solid #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            background: #8B4513;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .track-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .track-button:active {
+            transform: scale(0.95);
+        }
+
+        .straight-btn::after {
+            content: '';
+            width: 60px;
+            height: 8px;
+            background: #654321;
+            position: absolute;
+            border-radius: 4px;
+        }
+
+        .curve-btn::after {
+            content: '';
+            width: 30px;
+            height: 30px;
+            border: 8px solid #654321;
+            border-top: transparent;
+            border-left: transparent;
+            border-radius: 0 30px 0 0;
+            position: absolute;
+            transform: rotate(-45deg);
+        }
+
+        .track-piece {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            cursor: grab;
+            user-select: none;
+            z-index: 10;
+        }
+
+        .track-piece:active {
+            cursor: grabbing;
+        }
+
+        .track-piece.dragging {
+            z-index: 100;
+            transform: scale(1.05);
+        }
+
+        .track-straight {
+            background: none;
+        }
+
+        .track-straight::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px;
+            height: 8px;
+            background: #654321;
+            border-radius: 4px;
+        }
+
+        .track-curve {
+            background: none;
+        }
+
+        .track-curve::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            width: 35px;
+            height: 35px;
+            border: 8px solid #654321;
+            border-top: transparent;
+            border-left: transparent;
+            border-radius: 0 35px 0 0;
+            background: transparent;
+        }
+
+        .rotate-button {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            width: 30px;
+            height: 30px;
+            background: #FF6B6B;
+            border: 2px solid #333;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: white;
+            z-index: 101;
+        }
+
+        .track-piece:hover .rotate-button {
+            display: flex;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .control-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .control-button.train {
+            background: #2196F3;
+        }
+
+        .control-button.clear {
+            background: #E74C3C;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .instructions {
+            position: fixed;
+            top: 120px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            max-width: 220px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .train {
+            position: absolute;
+            width: 60px;
+            height: 30px;
+            background: #FF4444;
+            border: 3px solid #333;
+            border-radius: 8px;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: none;
+        }
+
+        .snap-zone {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(76, 175, 80, 0.5);
+            border: 2px solid #4CAF50;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            z-index: 5;
+        }
+
+        .snap-zone.active {
+            display: block;
+        }
+
+        .connection-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 0, 0, 0.7);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        .track-piece.connected .connection-point {
+            background: rgba(0, 255, 0, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <a href="../index.html" class="back-button">← Hub</a>
+        
+        <div class="toolbar">
+            <div class="track-button straight-btn" onclick="selectTrackType('straight')" title="Straight Track">Straight</div>
+            <div class="track-button curve-btn" onclick="selectTrackType('curve')" title="Curve Track">Curve</div>
+        </div>
+
+        <div class="instructions">
+            <strong>How to Play:</strong><br>
+            • Click track pieces to spawn them<br>
+            • Drag pieces to build your track<br>
+            • Click ↻ on curves to rotate<br>
+            • Connect pieces to make loops<br>
+            • Click Train to start the train!
+        </div>
+
+        <div class="controls">
+            <button class="control-button train" onclick="spawnTrain()">🚂 Train</button>
+            <button class="control-button clear" onclick="clearAll()">Clear All</button>
+        </div>
+    </div>
+
+    <script>
+        let trackPieces = [];
+        let train = null;
+        let selectedTrackType = 'straight';
+        let isDragging = false;
+        let dragElement = null;
+        let dragOffset = { x: 0, y: 0 };
+        let snapZones = [];
+        let connections = new Map();
+        let trackId = 0;
+
+        const GRID_SIZE = 40;
+        const SNAP_DISTANCE = 30;
+
+        function selectTrackType(type) {
+            selectedTrackType = type;
+            spawnTrack();
+        }
+
+        function spawnTrack() {
+            const track = document.createElement('div');
+            track.className = `track-piece track-${selectedTrackType}`;
+            track.id = `track-${trackId++}`;
+            track.dataset.type = selectedTrackType;
+            track.dataset.rotation = '0';
+
+            // Add rotate button for curves
+            if (selectedTrackType === 'curve') {
+                const rotateBtn = document.createElement('div');
+                rotateBtn.className = 'rotate-button';
+                rotateBtn.innerHTML = '↻';
+                rotateBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    rotateTrack(track);
+                };
+                track.appendChild(rotateBtn);
+            }
+
+            // Position in center
+            track.style.left = (window.innerWidth / 2 - 40) + 'px';
+            track.style.top = (window.innerHeight / 2 - 40) + 'px';
+
+            // Add drag events
+            track.addEventListener('mousedown', startDrag);
+            track.addEventListener('touchstart', startDrag);
+
+            document.getElementById('gameContainer').appendChild(track);
+
+            // Create connection points
+            createConnectionPoints(track);
+
+            trackPieces.push({
+                element: track,
+                type: selectedTrackType,
+                rotation: 0,
+                connections: []
+            });
+
+            updateSnapZones();
+        }
+
+        function createConnectionPoints(track) {
+            const type = track.dataset.type;
+            const rotation = parseInt(track.dataset.rotation);
+
+            // Clear existing connection points
+            track.querySelectorAll('.connection-point').forEach(p => p.remove());
+
+            const points = getConnectionPoints(type, rotation);
+            
+            points.forEach((point, index) => {
+                const connectionPoint = document.createElement('div');
+                connectionPoint.className = 'connection-point';
+                connectionPoint.style.left = point.x + 'px';
+                connectionPoint.style.top = point.y + 'px';
+                connectionPoint.dataset.index = index;
+                track.appendChild(connectionPoint);
+            });
+        }
+
+        function getConnectionPoints(type, rotation) {
+            let points = [];
+            
+            if (type === 'straight') {
+                if (rotation % 180 === 0) {
+                    // Horizontal
+                    points = [
+                        { x: 5, y: 40 },   // Left
+                        { x: 75, y: 40 }   // Right
+                    ];
+                } else {
+                    // Vertical
+                    points = [
+                        { x: 40, y: 5 },   // Top
+                        { x: 40, y: 75 }   // Bottom
+                    ];
+                }
+            } else if (type === 'curve') {
+                // Curve connection points based on rotation
+                const curvePoints = [
+                    [{ x: 40, y: 5 }, { x: 75, y: 40 }],   // 0°: Top-Right
+                    [{ x: 75, y: 40 }, { x: 40, y: 75 }],  // 90°: Right-Bottom
+                    [{ x: 40, y: 75 }, { x: 5, y: 40 }],   // 180°: Bottom-Left
+                    [{ x: 5, y: 40 }, { x: 40, y: 5 }]     // 270°: Left-Top
+                ];
+                points = curvePoints[Math.floor(rotation / 90) % 4];
+            }
+            
+            return points;
+        }
+
+        function rotateTrack(track) {
+            const currentRotation = parseInt(track.dataset.rotation);
+            const newRotation = (currentRotation + 90) % 360;
+            track.dataset.rotation = newRotation;
+
+            // Update visual rotation
+            const afterElement = track.querySelector('::after') || track;
+            track.style.transform = `rotate(${newRotation}deg)`;
+
+            // Update connection points
+            createConnectionPoints(track);
+            updateSnapZones();
+        }
+
+        function startDrag(e) {
+            e.preventDefault();
+            isDragging = true;
+            dragElement = e.target.closest('.track-piece');
+            dragElement.classList.add('dragging');
+
+            const rect = dragElement.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            dragOffset.x = clientX - rect.left;
+            dragOffset.y = clientY - rect.top;
+
+            showSnapZones();
+        }
+
+        function drag(e) {
+            if (!isDragging || !dragElement) return;
+            
+            e.preventDefault();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            const newX = clientX - dragOffset.x;
+            const newY = clientY - dragOffset.y;
+
+            dragElement.style.left = newX + 'px';
+            dragElement.style.top = newY + 'px';
+
+            highlightNearbySnapZones(clientX, clientY);
+        }
+
+        function endDrag(e) {
+            if (!isDragging || !dragElement) return;
+
+            const clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
+            const clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
+
+            // Try to snap to nearby connection points
+            snapToNearestConnection(dragElement, clientX, clientY);
+
+            dragElement.classList.remove('dragging');
+            hideSnapZones();
+            isDragging = false;
+            dragElement = null;
+        }
+
+        function showSnapZones() {
+            document.querySelectorAll('.snap-zone').forEach(zone => {
+                if (zone.dataset.trackId !== dragElement.id) {
+                    zone.classList.add('active');
+                }
+            });
+        }
+
+        function hideSnapZones() {
+            document.querySelectorAll('.snap-zone').forEach(zone => {
+                zone.classList.remove('active');
+            });
+        }
+
+        function highlightNearbySnapZones(mouseX, mouseY) {
+            document.querySelectorAll('.snap-zone').forEach(zone => {
+                if (zone.dataset.trackId === dragElement.id) return;
+
+                const rect = zone.getBoundingClientRect();
+                const zoneX = rect.left + rect.width / 2;
+                const zoneY = rect.top + rect.height / 2;
+                
+                const distance = Math.sqrt(
+                    Math.pow(mouseX - zoneX, 2) + Math.pow(mouseY - zoneY, 2)
+                );
+
+                if (distance < SNAP_DISTANCE) {
+                    zone.style.background = 'rgba(255, 193, 7, 0.8)';
+                    zone.style.transform = 'translate(-50%, -50%) scale(1.2)';
+                } else {
+                    zone.style.background = 'rgba(76, 175, 80, 0.5)';
+                    zone.style.transform = 'translate(-50%, -50%) scale(1)';
+                }
+            });
+        }
+
+        function snapToNearestConnection(track, mouseX, mouseY) {
+            let closestZone = null;
+            let closestDistance = SNAP_DISTANCE;
+
+            document.querySelectorAll('.snap-zone').forEach(zone => {
+                if (zone.dataset.trackId === track.id) return;
+
+                const rect = zone.getBoundingClientRect();
+                const zoneX = rect.left + rect.width / 2;
+                const zoneY = rect.top + rect.height / 2;
+                
+                const distance = Math.sqrt(
+                    Math.pow(mouseX - zoneX, 2) + Math.pow(mouseY - zoneY, 2)
+                );
+
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestZone = zone;
+                }
+            });
+
+            if (closestZone) {
+                const targetTrackId = closestZone.dataset.trackId;
+                const targetTrack = document.getElementById(targetTrackId);
+                const targetRect = targetTrack.getBoundingClientRect();
+                const zoneRect = closestZone.getBoundingClientRect();
+
+                // Position the dragged track so its connection point aligns
+                const draggedPoints = getConnectionPoints(track.dataset.type, parseInt(track.dataset.rotation));
+                const targetConnectionIndex = parseInt(closestZone.dataset.connectionIndex);
+                
+                // Calculate offset to align connection points
+                const targetX = targetRect.left + parseFloat(closestZone.style.left) - 40;
+                const targetY = targetRect.top + parseFloat(closestZone.style.top) - 40;
+
+                track.style.left = targetX + 'px';
+                track.style.top = targetY + 'px';
+
+                updateSnapZones();
+            }
+        }
+
+        function updateSnapZones() {
+            // Clear existing snap zones
+            document.querySelectorAll('.snap-zone').forEach(zone => zone.remove());
+
+            trackPieces.forEach(trackData => {
+                const track = trackData.element;
+                const rect = track.getBoundingClientRect();
+                const points = getConnectionPoints(track.dataset.type, parseInt(track.dataset.rotation));
+
+                points.forEach((point, index) => {
+                    const zone = document.createElement('div');
+                    zone.className = 'snap-zone';
+                    zone.style.left = (rect.left + point.x - 10) + 'px';
+                    zone.style.top = (rect.top + point.y - 10) + 'px';
+                    zone.dataset.trackId = track.id;
+                    zone.dataset.connectionIndex = index;
+                    document.getElementById('gameContainer').appendChild(zone);
+                });
+            });
+        }
+
+        function spawnTrain() {
+            if (train) {
+                train.remove();
+                train = null;
+                return;
+            }
+
+            if (trackPieces.length === 0) return;
+
+            train = document.createElement('div');
+            train.className = 'train';
+            train.innerHTML = '🚂';
+
+            // Start at the first track piece
+            const startTrack = trackPieces[0].element;
+            const rect = startTrack.getBoundingClientRect();
+            train.style.left = (rect.left + 10) + 'px';
+            train.style.top = (rect.top + 25) + 'px';
+
+            document.getElementById('gameContainer').appendChild(train);
+
+            // Start train movement
+            moveTrain();
+        }
+
+        function moveTrain() {
+            if (!train) return;
+
+            let currentTrackIndex = 0;
+            let position = 0;
+            let direction = 1;
+
+            function animate() {
+                if (!train || trackPieces.length === 0) return;
+
+                const currentTrack = trackPieces[currentTrackIndex];
+                if (!currentTrack) return;
+
+                const trackRect = currentTrack.element.getBoundingClientRect();
+                const progress = position / 100;
+
+                // Calculate position along track
+                let x, y;
+                if (currentTrack.type === 'straight') {
+                    const rotation = parseInt(currentTrack.element.dataset.rotation);
+                    if (rotation % 180 === 0) {
+                        // Horizontal movement
+                        x = trackRect.left + (progress * 60) + 10;
+                        y = trackRect.top + 25;
+                    } else {
+                        // Vertical movement
+                        x = trackRect.left + 25;
+                        y = trackRect.top + (progress * 60) + 10;
+                    }
+                } else {
+                    // Curve movement - approximate with simple interpolation
+                    const rotation = parseInt(currentTrack.element.dataset.rotation);
+                    const angle = (rotation + progress * 90) * Math.PI / 180;
+                    x = trackRect.left + 40 + Math.cos(angle) * 20;
+                    y = trackRect.top + 40 + Math.sin(angle) * 20;
+                }
+
+                train.style.left = x + 'px';
+                train.style.top = y + 'px';
+
+                position += 2 * direction;
+
+                if (position >= 100) {
+                    currentTrackIndex++;
+                    if (currentTrackIndex >= trackPieces.length) {
+                        // End of track - remove train
+                        train.remove();
+                        train = null;
+                        return;
+                    }
+                    position = 0;
+                } else if (position <= 0) {
+                    currentTrackIndex--;
+                    if (currentTrackIndex < 0) {
+                        train.remove();
+                        train = null;
+                        return;
+                    }
+                    position = 100;
+                }
+
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+
+        function clearAll() {
+            if (train) {
+                train.remove();
+                train = null;
+            }
+            
+            trackPieces.forEach(track => {
+                track.element.remove();
+            });
+            trackPieces = [];
+            
+            document.querySelectorAll('.snap-zone').forEach(zone => zone.remove());
+            connections.clear();
+        }
+
+        // Event listeners
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag);
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+
+        // Update snap zones when window resizes
+        window.addEventListener('resize', () => {
+            setTimeout(updateSnapZones, 100);
+        });
+
+        // Prevent context menu on long touch
+        document.addEventListener('contextmenu', e => e.preventDefault());
+    </script>
+</body>
+</html>
