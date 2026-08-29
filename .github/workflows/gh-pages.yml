@@ -18,7 +18,7 @@ jobs:
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
         with:
-          hugo-version: 'latest'
+          hugo-version: '0.134.3'  # pinned: yinyang theme uses .Site.Author.name, removed in newer Hugo
           # extended: true
 
       - name: Build
